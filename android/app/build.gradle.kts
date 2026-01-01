@@ -12,6 +12,14 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
 }
 
+// Decode keystore from base64 if running in CI
+val ciKeystoreFile = file("${project.projectDir}/ci-keystore.jks")
+if (System.getenv("KEYSTORE_BASE64") != null && !ciKeystoreFile.exists()) {
+    ciKeystoreFile.writeBytes(
+        java.util.Base64.getDecoder().decode(System.getenv("KEYSTORE_BASE64"))
+    )
+}
+
 android {
     namespace = "com.zarz.spotiflac"
     compileSdk = flutter.compileSdkVersion
@@ -32,20 +40,14 @@ android {
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {
+                // Local build: use keystore.properties
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
-            } else if (System.getenv("KEYSTORE_BASE64") != null) {
-                // CI/CD: decode keystore from base64 environment variable
-                val keystoreFile = file("${project.buildDir}/keystore.jks")
-                if (!keystoreFile.exists()) {
-                    keystoreFile.parentFile.mkdirs()
-                    keystoreFile.writeBytes(
-                        java.util.Base64.getDecoder().decode(System.getenv("KEYSTORE_BASE64"))
-                    )
-                }
-                storeFile = keystoreFile
+            } else if (ciKeystoreFile.exists()) {
+                // CI/CD build: use decoded keystore
+                storeFile = ciKeystoreFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")

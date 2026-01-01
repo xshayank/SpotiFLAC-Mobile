@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.0-hotfix2] - 2026-01-02
+
+### Fixed
+- **App Signing**: Fixed CI/CD signing configuration
+
 ## [1.5.0-hotfix] - 2026-01-02
 
 ### Important Notice

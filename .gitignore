@@ -43,6 +43,7 @@ android/*.iml
 android/keystore.properties
 android/*.jks
 android/*.keystore
+android/app/ci-keystore.jks
 
 # iOS
 ios/Frameworks/
