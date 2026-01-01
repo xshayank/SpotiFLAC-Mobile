@@ -169,11 +169,11 @@ class _SettingsTabState extends ConsumerState<SettingsTab> with AutomaticKeepAli
         ListTile(
           leading: Icon(Icons.info, color: colorScheme.primary),
           title: const Text('About'),
-          subtitle: const Text('SpotiFLAC v1.0.4'),
+          subtitle: const Text('SpotiFLAC v1.0.5'),
           onTap: () => showAboutDialog(
             context: context,
             applicationName: 'SpotiFLAC',
-            applicationVersion: '1.0.4',
+            applicationVersion: '1.0.5',
             applicationLegalese: '© 2024 SpotiFLAC\n\nMobile: zarzet\nOriginal: afkarxyz',
           ),
         ),
