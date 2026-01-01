@@ -88,13 +88,12 @@ jobs:
 
       - name: Setup Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/ci-keystore.jks
-          echo "storeFile=ci-keystore.jks" > android/keystore.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/keystore.properties
-          ls -la android/app/ci-keystore.jks
-          cat android/keystore.properties | head -1
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=app/upload-keystore.jks" >> android/key.properties
+          cat android/key.properties
 
       - name: Build APK (Release)
         run: flutter build apk --release --split-per-abi

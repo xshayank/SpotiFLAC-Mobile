@@ -5,8 +5,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Load keystore properties from file if exists
-val keystorePropertiesFile = rootProject.file("keystore.properties")
+// Load keystore properties from key.properties file
+val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = java.util.Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
@@ -32,10 +32,10 @@ android {
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("release") {
-                storeFile = file("app/${keystoreProperties["storeFile"]}")
-                storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
             }
         }
     }
@@ -48,8 +48,6 @@ android {
         versionName = flutter.versionName
         multiDexEnabled = true
         
-        // Only include arm64-v8a for smaller APK (most modern devices)
-        // Remove this line if you need to support older 32-bit devices
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
@@ -57,13 +55,11 @@ android {
 
     buildTypes {
         release {
-            // Use release signing config if available, otherwise fall back to debug
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")
             }
-            // Enable code shrinking and resource shrinking
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
