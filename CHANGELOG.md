@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.1.7] - 2026-01-09
+
+### Added
+
+- **Special Thanks Section**: Added new "Special Thanks" section in About page to credit API creators
+  - **uimaxbai** - Creator of QQDL & HiFi API for Tidal downloads
+  - **sachinsenal0x64** - Original HiFi project creator, foundation of Tidal integration
+  - **DoubleDouble** - Amazing API for Amazon Music downloads
+  - **DAB Music** - The best Qobuz streaming API for Hi-Res downloads
+- **New Contributor**: Added Amonoman to Contributors section as the app logo creator
+
+### Fixed
+
+- **Missing PlatformBridge Import**: Fixed build errors in `home_tab.dart` and `playlist_screen.dart`
+  - Added missing `import 'package:spotiflac_android/services/platform_bridge.dart'`
+- **iOS Method Channel Crash**: Fixed "Method not implemented" crash when searching Deezer from iOS
+  - Implemented missing `searchDeezerAll` handler in `AppDelegate.swift`
+  - Ensures full compatibility with new Deezer integration features on iOS
+
+---
+
 ## [2.1.6] - 2026-01-08
 
 ### Added

@@ -201,7 +201,7 @@ import Gobackend  // Import Go framework
         case "parseDeezerUrl":
             let args = call.arguments as! [String: Any]
             let url = args["url"] as! String
-            let response = GobackendParseDeezerUrl(url, &error)
+            let response = GobackendParseDeezerURLExport(url, &error)
             if let error = error { throw error }
             return response
 
@@ -223,14 +223,15 @@ import Gobackend  // Import Go framework
         case "getSpotifyMetadataWithFallback":
             let args = call.arguments as! [String: Any]
             let url = args["url"] as! String
-            let response = GobackendGetSpotifyMetadataWithFallback(url, &error)
+            let response = GobackendGetSpotifyMetadataWithDeezerFallback(url, &error)
             if let error = error { throw error }
             return response
             
         case "preWarmTrackCache":
             let args = call.arguments as! [String: Any]
             let tracksJson = args["tracks"] as! String
-            GobackendPreWarmTrackCache(tracksJson)
+            let _ = GobackendPreWarmTrackCacheJSON(tracksJson, &error)
+            if let error = error { throw error }
             return nil
             
         case "getTrackCacheSize":

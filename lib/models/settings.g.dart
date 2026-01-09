@@ -7,7 +7,7 @@ part of 'settings.dart';
 // **************************************************************************
 
 AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => AppSettings(
-  defaultService: json['defaultService'] as String? ?? 'qobuz',
+  defaultService: json['defaultService'] as String? ?? 'tidal',
   audioQuality: json['audioQuality'] as String? ?? 'LOSSLESS',
   filenameFormat: json['filenameFormat'] as String? ?? '{title} - {artist}',
   downloadDirectory: json['downloadDirectory'] as String? ?? '',

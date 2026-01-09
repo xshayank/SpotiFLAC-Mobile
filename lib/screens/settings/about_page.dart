@@ -78,6 +78,49 @@ class AboutPage extends StatelessWidget {
                   name: AppInfo.originalAuthor,
                   description: 'Creator of the original SpotiFLAC',
                   githubUsername: AppInfo.originalAuthor,
+                  showDivider: true,
+                ),
+                _ContributorItem(
+                  name: 'Amonoman',
+                  description: 'The talented artist who created our beautiful app logo!',
+                  githubUsername: 'Amonoman',
+                  showDivider: false,
+                ),
+              ],
+            ),
+          ),
+
+          // Special Thanks section
+          const SliverToBoxAdapter(
+            child: SettingsSectionHeader(title: 'Special Thanks'),
+          ),
+          SliverToBoxAdapter(
+            child: SettingsGroup(
+              children: [
+                _ContributorItem(
+                  name: 'uimaxbai',
+                  description: 'The creator of QQDL & HiFi API. Without this API, Tidal downloads wouldn\'t exist!',
+                  githubUsername: 'uimaxbai',
+                  showDivider: true,
+                ),
+                _ContributorItem(
+                  name: 'sachinsenal0x64',
+                  description: 'The original HiFi project creator. The foundation of Tidal integration!',
+                  githubUsername: 'sachinsenal0x64',
+                  showDivider: true,
+                ),
+                SettingsItem(
+                  icon: Icons.cloud_outlined,
+                  title: 'DoubleDouble',
+                  subtitle: 'Amazing API for Amazon Music downloads. Thank you for making it free!',
+                  onTap: () => _launchUrl('https://doubledouble.top'),
+                  showDivider: true,
+                ),
+                SettingsItem(
+                  icon: Icons.music_note_outlined,
+                  title: 'DAB Music',
+                  subtitle: 'The best Qobuz streaming API. Hi-Res downloads wouldn\'t be possible without this!',
+                  onTap: () => _launchUrl('https://dabmusic.xyz'),
                   showDivider: false,
                 ),
               ],
