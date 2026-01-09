@@ -249,6 +249,13 @@ import Gobackend  // Import Go framework
             GobackendClearTrackCache()
             return nil
             
+        case "setSpotifyCredentials":
+            let args = call.arguments as! [String: Any]
+            let clientId = args["client_id"] as! String
+            let clientSecret = args["client_secret"] as! String
+            GobackendSetSpotifyAPICredentials(clientId, clientSecret)
+            return nil
+            
         default:
             throw NSError(
                 domain: "SpotiFLAC",
