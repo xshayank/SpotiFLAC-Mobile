@@ -221,6 +221,12 @@ class AppTheme {
           }
           return scheme.surfaceContainerHighest;
         }),
+        thumbIcon: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Icon(Icons.check, color: scheme.primary);
+          }
+          return null;
+        }),
       );
 
   /// Chip theme

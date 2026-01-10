@@ -1,5 +1,56 @@
 # Changelog
 
+## [2.2.7] - 2026-01-11
+
+### Added
+
+- **Deezer Metadata Support**: Enhanced metadata viewer for Deezer tracks
+  - "Open in Deezer" button for Deezer-sourced tracks (opens app or web)
+  - Displays "Deezer ID" instead of "Spotify ID" when applicable
+
+### Changed
+
+- **UI Modernization**: Major UI consistency updates across the app
+  - **Unified App Bars**: Home, History, and Settings now share identical behavior
+    - Lowered expanded header for easier one-handed reachability
+    - Dynamic title text scaling (20px to 34px)
+  - **Appearance Settings**: Completely redesigned appearance page
+    - New "Theme Preview" card showing visualizing current theme
+    - Modern color palette picker replacing old color dots
+    - Clean, grouped layout
+  - **App Logo**: Refined logo style on Home and About screens
+    - Inverted colors: Filled primary color circle with on-color icon
+    - Removed padding for a cleaner, bolder look
+  - **Material 3 Switches**: Added checkmark icon to active switches
+
+## [2.2.6] - 2026-01-11
+
+### Fixed
+
+- **Release Mode Logging**: Flutter app logs now properly captured in release builds
+  - Previously only Go backend logs appeared when "Detailed Logging" was enabled
+  - Now both Flutter and Go logs are captured in release mode
+  - Bypasses Logger package which filters logs in release mode
+
+### Added
+
+- **Detailed Deezer Search Logging**: Better debugging for search issues
+  - Logs API URLs, response counts, and errors
+  - Helps diagnose geo-restriction and API issues
+  - Detects Deezer API error responses
+
+### Changed
+
+- **Home Screen Logo**: Replaced music note icon with app logo
+  - Uses `assets/images/logo.png`
+  - Rounded corners (24px radius)
+  - Fallback to music note icon if logo fails to load
+- **About Page Logo**: Removed shadow/border from logo
+  - Cleaner appearance without background container
+- **About Page Icon Alignment**: Icons now aligned with contributor avatars
+  - DoubleDouble and DAB Music icons use 40x40 area
+  - Text now properly aligned with contributor items
+
 ## [2.2.5] - 2026-01-10
 
 ### Added

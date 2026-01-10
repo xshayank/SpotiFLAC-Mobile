@@ -289,6 +289,7 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
     final colorScheme = Theme.of(context).colorScheme;
     final hasResults = _isTyping || tracks.isNotEmpty || (searchArtists != null && searchArtists.isNotEmpty) || isLoading;
     final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
     final historyItems = ref.watch(downloadHistoryProvider.select((s) => s.items));
 
     return Scaffold(
@@ -297,24 +298,32 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
         slivers: [
           // App Bar - always present
           SliverAppBar(
-            expandedHeight: 130,
+            expandedHeight: 120 + topPadding,
             collapsedHeight: kToolbarHeight,
             floating: false,
             pinned: true,
             backgroundColor: colorScheme.surface,
             surfaceTintColor: Colors.transparent,
             automaticallyImplyLeading: false,
-            flexibleSpace: FlexibleSpaceBar(
-              expandedTitleScale: 1.3,
-              titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-              title: Text(
-                'Home',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
+            flexibleSpace: LayoutBuilder(
+              builder: (context, constraints) {
+                final maxHeight = 120 + topPadding;
+                final minHeight = kToolbarHeight + topPadding;
+                final expandRatio = ((constraints.maxHeight - minHeight) / (maxHeight - minHeight)).clamp(0.0, 1.0);
+                
+                return FlexibleSpaceBar(
+                  expandedTitleScale: 1.0,
+                  titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+                  title: Text(
+                    'Home',
+                    style: TextStyle(
+                      fontSize: 20 + (14 * expandRatio), // 20 -> 34
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           
@@ -328,24 +337,25 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
                   : Column(
                       children: [
                         SizedBox(height: screenHeight * 0.06),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
+                        Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
                           child: Image.asset(
-                            'assets/images/logo.png',
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                color: colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Icon(
-                                Icons.music_note,
-                                size: 48,
-                                color: colorScheme.onPrimaryContainer,
+                            'assets/images/logo-transparant.png',
+                            color: colorScheme.onPrimary, // Tint with onPrimary color
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => ClipRRect(
+                              // Fallback to original logo if transparent one is missing
+                              borderRadius: BorderRadius.circular(24),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                width: 96,
+                                height: 96,
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ),

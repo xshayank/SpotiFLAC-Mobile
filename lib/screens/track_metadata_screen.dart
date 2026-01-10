@@ -353,19 +353,24 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen> {
             // Metadata grid
             _buildMetadataGrid(context, colorScheme),
             
-            // Spotify link button
+            // Streaming service link button
             if (item.spotifyId != null && item.spotifyId!.isNotEmpty) ...[
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => _openSpotifyUrl(context),
-                icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text('Open in Spotify'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  final isDeezer = item.spotifyId!.contains('deezer');
+                  return OutlinedButton.icon(
+                    onPressed: () => _openServiceUrl(context),
+                    icon: const Icon(Icons.open_in_new, size: 18),
+                    label: Text(isDeezer ? 'Open in Deezer' : 'Open in Spotify'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
               ),
             ],
           ],
@@ -374,16 +379,24 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen> {
     );
   }
 
-  Future<void> _openSpotifyUrl(BuildContext context) async {
+  Future<void> _openServiceUrl(BuildContext context) async {
     if (item.spotifyId == null) return;
     
-    final webUrl = 'https://open.spotify.com/track/${item.spotifyId}';
-    final spotifyUri = Uri.parse('spotify:track:${item.spotifyId}');
+    final isDeezer = item.spotifyId!.contains('deezer');
+    final rawId = item.spotifyId!.replaceAll('deezer:', '');
+    
+    final webUrl = isDeezer 
+        ? 'https://www.deezer.com/track/$rawId'
+        : 'https://open.spotify.com/track/$rawId';
+        
+    final appUri = isDeezer
+        ? Uri.parse('deezer://www.deezer.com/track/$rawId')
+        : Uri.parse('spotify:track:$rawId');
     
     try {
-      // Try to open in Spotify app first using URI scheme
+      // Try to open in App first using URI scheme
       final launched = await launchUrl(
-        spotifyUri,
+        appUri,
         mode: LaunchMode.externalApplication,
       );
       
@@ -406,7 +419,7 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen> {
         if (context.mounted) {
           _copyToClipboard(context, webUrl);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Spotify URL copied to clipboard')),
+            SnackBar(content: Text('${isDeezer ? 'Deezer' : 'Spotify'} URL copied to clipboard')),
           );
         }
       }
@@ -439,11 +452,18 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen> {
         _MetadataItem('Release date', releaseDate!),
       if (isrc != null && isrc!.isNotEmpty)
         _MetadataItem('ISRC', isrc!),
-      if (item.spotifyId != null && item.spotifyId!.isNotEmpty)
-        _MetadataItem('Spotify ID', item.spotifyId!),
+    ];
+    
+    if (item.spotifyId != null && item.spotifyId!.isNotEmpty) {
+      final isDeezer = item.spotifyId!.contains('deezer');
+      final cleanId = item.spotifyId!.replaceAll('deezer:', '');
+      items.add(_MetadataItem(isDeezer ? 'Deezer ID' : 'Spotify ID', cleanId));
+    }
+    
+    items.addAll([
       _MetadataItem('Service', item.service.toUpperCase()),
       _MetadataItem('Downloaded', _formatFullDate(item.downloadedAt)),
-    ];
+    ]);
 
     return Column(
       children: items.map((metadata) {

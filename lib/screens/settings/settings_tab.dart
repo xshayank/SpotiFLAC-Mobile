@@ -14,29 +14,38 @@ class SettingsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return CustomScrollView(
       slivers: [
         // Collapsing App Bar
         SliverAppBar(
-          expandedHeight: 130,
+          expandedHeight: 120 + topPadding,
           collapsedHeight: kToolbarHeight,
           floating: false,
           pinned: true,
           backgroundColor: colorScheme.surface,
           surfaceTintColor: Colors.transparent,
           automaticallyImplyLeading: false,
-          flexibleSpace: FlexibleSpaceBar(
-            expandedTitleScale: 1.3,
-            titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-            title: Text(
-              'Settings',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
+          flexibleSpace: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxHeight = 120 + topPadding;
+              final minHeight = kToolbarHeight + topPadding;
+              final expandRatio = ((constraints.maxHeight - minHeight) / (maxHeight - minHeight)).clamp(0.0, 1.0);
+              
+              return FlexibleSpaceBar(
+                expandedTitleScale: 1.0,
+                titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
+                title: Text(
+                  'Settings',
+                  style: TextStyle(
+                    fontSize: 20 + (14 * expandRatio), // 20 -> 34
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              );
+            },
           ),
         ),
 

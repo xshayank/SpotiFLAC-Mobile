@@ -31,6 +31,42 @@ class AppearanceSettingsPage extends ConsumerWidget {
               flexibleSpace: _AppBarTitle(title: 'Appearance', topPadding: topPadding),
             ),
 
+            // Preview Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _ThemePreviewCard(),
+              ),
+            ),
+
+            // Color section
+            const SliverToBoxAdapter(child: SettingsSectionHeader(title: 'Color')),
+
+            SliverToBoxAdapter(
+              child: SettingsGroup(
+                children: [
+                  SettingsSwitchItem(
+                    icon: Icons.wallpaper,
+                    title: 'Dynamic Color',
+                    subtitle: 'Use colors from your wallpaper',
+                    value: themeSettings.useDynamicColor,
+                    onChanged: (value) => ref.read(themeProvider.notifier).setUseDynamicColor(value),
+                    showDivider: false,
+                  ),
+                ],
+              ),
+            ),
+            if (!themeSettings.useDynamicColor)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: _ColorPalettePicker(
+                    currentColor: themeSettings.seedColorValue,
+                    onColorSelected: (color) => ref.read(themeProvider.notifier).setSeedColor(color),
+                  ),
+                ),
+              ),
+
             // Theme section
             const SliverToBoxAdapter(child: SettingsSectionHeader(title: 'Theme')),
             SliverToBoxAdapter(
@@ -43,33 +79,11 @@ class AppearanceSettingsPage extends ConsumerWidget {
                   SettingsSwitchItem(
                     icon: Icons.brightness_2,
                     title: 'AMOLED Dark',
-                    subtitle: 'Pure black background for OLED screens',
+                    subtitle: 'Pure black background',
                     value: themeSettings.useAmoled,
                     onChanged: (value) => ref.read(themeProvider.notifier).setUseAmoled(value),
                     showDivider: false,
                   ),
-                ],
-              ),
-            ),
-
-            // Color section
-            const SliverToBoxAdapter(child: SettingsSectionHeader(title: 'Color')),
-            SliverToBoxAdapter(
-              child: SettingsGroup(
-                children: [
-                  SettingsSwitchItem(
-                    icon: Icons.auto_awesome,
-                    title: 'Dynamic Color',
-                    subtitle: 'Use colors from your wallpaper',
-                    value: themeSettings.useDynamicColor,
-                    onChanged: (value) => ref.read(themeProvider.notifier).setUseDynamicColor(value),
-                    showDivider: !themeSettings.useDynamicColor,
-                  ),
-                  if (!themeSettings.useDynamicColor)
-                    _ColorPicker(
-                      currentColor: themeSettings.seedColorValue,
-                      onColorSelected: (color) => ref.read(themeProvider.notifier).setSeedColor(color),
-                    ),
                 ],
               ),
             ),
@@ -88,10 +102,234 @@ class AppearanceSettingsPage extends ConsumerWidget {
             ),
 
             // Fill remaining for scroll
-            const SliverFillRemaining(hasScrollBody: false, child: SizedBox()),
+            const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 32)),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A simplified preview of how the app looks with current settings
+class _ThemePreviewCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      height: 200,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest, // Background similar to reference
+        borderRadius: BorderRadius.circular(28),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // Decorative background blobs
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 200, height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: Container(
+              width: 150, height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          
+          // Foreground "fake UI"
+          Center(
+            child: Container(
+              width: 260,
+              height: 140,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Fake Album Art
+                  Container(
+                    width: 108,
+                    height: 108,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(Icons.music_note, color: colorScheme.onPrimary, size: 48),
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // Fake Text Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: double.infinity, height: 14,
+                          decoration: BoxDecoration(
+                            color: colorScheme.onSurface,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 80, height: 10,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Icon(Icons.skip_previous, size: 24, color: colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 12),
+                            Icon(Icons.play_circle_fill, size: 32, color: colorScheme.primary),
+                            const SizedBox(width: 12),
+                            Icon(Icons.skip_next, size: 24, color: colorScheme.onSurfaceVariant),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+           // Label badge
+          Positioned(
+            bottom: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                isDark ? 'Dark Mode' : 'Light Mode',
+                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+
+
+class _ColorPalettePicker extends StatelessWidget {
+  final int currentColor;
+  final ValueChanged<Color> onColorSelected;
+  const _ColorPalettePicker({required this.currentColor, required this.onColorSelected});
+
+  static const _colors = [
+    Color(0xFF1DB954), Color(0xFF6750A4), Color(0xFF0061A4), Color(0xFF006E1C),
+    Color(0xFFBA1A1A), Color(0xFF984061), Color(0xFF7D5260), Color(0xFF006874), 
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _colors.map((color) {
+          final isSelected = color.toARGB32() == currentColor;
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => onColorSelected(color),
+              child: _ColorPaletteItem(color: color, isSelected: isSelected),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _ColorPaletteItem extends StatelessWidget {
+  final Color color;
+  final bool isSelected;
+  
+  const _ColorPaletteItem({required this.color, required this.isSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = ColorScheme.fromSeed(seedColor: color, brightness: Theme.of(context).brightness);
+    final size = 64.0;
+    
+    return Stack(
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: Container(color: scheme.primaryContainer)),
+                    Expanded(child: Container(color: scheme.tertiaryContainer)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: Container(color: scheme.secondaryContainer)),
+                    Expanded(child: Container(color: scheme.surfaceContainer)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isSelected)
+          Positioned.fill(
+             child: Center(
+               child: Container(
+                 padding: const EdgeInsets.all(4),
+                 decoration: const BoxDecoration(
+                   color: Colors.white,
+                   shape: BoxShape.circle,
+                 ),
+                 child: Icon(Icons.check, size: 16, color: scheme.primary),
+               ),
+             ),
+          ),
+      ],
     );
   }
 }
@@ -196,45 +434,6 @@ class _ThemeModeChip extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ColorPicker extends StatelessWidget {
-  final int currentColor;
-  final ValueChanged<Color> onColorSelected;
-  const _ColorPicker({required this.currentColor, required this.onColorSelected});
-
-  static const _colors = [
-    Color(0xFF1DB954), Color(0xFF6750A4), Color(0xFF0061A4), Color(0xFF006E1C),
-    Color(0xFFBA1A1A), Color(0xFF984061), Color(0xFF7D5260), Color(0xFF006874), Color(0xFFFF6F00),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Accent Color', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-        const SizedBox(height: 12),
-        Wrap(spacing: 12, runSpacing: 12, children: _colors.map((color) {
-          final isSelected = color.toARGB32() == currentColor;
-          return GestureDetector(
-            onTap: () => onColorSelected(color),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 44, height: 44,
-              decoration: BoxDecoration(
-                color: color, shape: BoxShape.circle,
-                border: isSelected ? Border.all(color: colorScheme.onSurface, width: 3) : null,
-                boxShadow: isSelected ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2)] : null,
-              ),
-              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
-            ),
-          );
-        }).toList()),
-      ]),
     );
   }
 }

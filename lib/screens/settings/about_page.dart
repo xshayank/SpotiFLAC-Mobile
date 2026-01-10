@@ -250,24 +250,25 @@ class _AppHeaderCard extends StatelessWidget {
       child: Column(
         children: [
           // App logo
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+          // App logo
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
             child: Image.asset(
-              'assets/images/logo.png',
-              width: 88,
-              height: 88,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                width: 88,
-                height: 88,
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Icon(
-                  Icons.music_note,
-                  size: 48,
-                  color: colorScheme.onPrimaryContainer,
+              'assets/images/logo-transparant.png',
+              color: colorScheme.onPrimary, // Tint with onPrimary color
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 88,
+                  height: 88,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
