@@ -484,6 +484,25 @@ import Gobackend  // Import Go framework
             if let error = error { throw error }
             return response
             
+        // Extension URL Handler API
+        case "handleURLWithExtension":
+            let args = call.arguments as! [String: Any]
+            let url = args["url"] as! String
+            let response = GobackendHandleURLWithExtensionJSON(url, &error)
+            if let error = error { throw error }
+            return response
+            
+        case "findURLHandler":
+            let args = call.arguments as! [String: Any]
+            let url = args["url"] as! String
+            let response = GobackendFindURLHandlerJSON(url)
+            return response
+            
+        case "getURLHandlers":
+            let response = GobackendGetURLHandlersJSON(&error)
+            if let error = error { throw error }
+            return response
+            
         // Extension Post-Processing API
         case "runPostProcessing":
             let args = call.arguments as! [String: Any]

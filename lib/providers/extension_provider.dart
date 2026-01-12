@@ -24,6 +24,7 @@ class Extension {
   final bool hasDownloadProvider;
   final bool skipMetadataEnrichment; // If true, use metadata from extension instead of enriching
   final SearchBehavior? searchBehavior; // Custom search behavior
+  final URLHandler? urlHandler; // Custom URL handling
   final TrackMatching? trackMatching; // Custom track matching
   final PostProcessing? postProcessing; // Post-processing hooks
 
@@ -45,6 +46,7 @@ class Extension {
     this.hasDownloadProvider = false,
     this.skipMetadataEnrichment = false,
     this.searchBehavior,
+    this.urlHandler,
     this.trackMatching,
     this.postProcessing,
   });
@@ -74,6 +76,9 @@ class Extension {
       searchBehavior: json['search_behavior'] != null 
           ? SearchBehavior.fromJson(json['search_behavior'] as Map<String, dynamic>)
           : null,
+      urlHandler: json['url_handler'] != null
+          ? URLHandler.fromJson(json['url_handler'] as Map<String, dynamic>)
+          : null,
       trackMatching: json['track_matching'] != null
           ? TrackMatching.fromJson(json['track_matching'] as Map<String, dynamic>)
           : null,
@@ -101,6 +106,7 @@ class Extension {
     bool? hasDownloadProvider,
     bool? skipMetadataEnrichment,
     SearchBehavior? searchBehavior,
+    URLHandler? urlHandler,
     TrackMatching? trackMatching,
     PostProcessing? postProcessing,
   }) {
@@ -122,12 +128,14 @@ class Extension {
       hasDownloadProvider: hasDownloadProvider ?? this.hasDownloadProvider,
       skipMetadataEnrichment: skipMetadataEnrichment ?? this.skipMetadataEnrichment,
       searchBehavior: searchBehavior ?? this.searchBehavior,
+      urlHandler: urlHandler ?? this.urlHandler,
       trackMatching: trackMatching ?? this.trackMatching,
       postProcessing: postProcessing ?? this.postProcessing,
     );
   }
 
   bool get hasCustomSearch => searchBehavior?.enabled ?? false;
+  bool get hasURLHandler => urlHandler?.enabled ?? false;
   bool get hasCustomMatching => trackMatching?.customMatching ?? false;
   bool get hasPostProcessing => postProcessing?.enabled ?? false;
 }
@@ -223,6 +231,36 @@ class PostProcessing {
           ?.map((h) => PostProcessingHook.fromJson(h as Map<String, dynamic>))
           .toList() ?? [],
     );
+  }
+}
+
+/// URL handler configuration for custom URL patterns
+class URLHandler {
+  final bool enabled;
+  final List<String> patterns;
+
+  const URLHandler({
+    required this.enabled,
+    this.patterns = const [],
+  });
+
+  factory URLHandler.fromJson(Map<String, dynamic> json) {
+    return URLHandler(
+      enabled: json['enabled'] as bool? ?? false,
+      patterns: (json['patterns'] as List<dynamic>?)?.cast<String>() ?? [],
+    );
+  }
+
+  /// Check if a URL matches any of the patterns
+  bool matchesURL(String url) {
+    if (!enabled || patterns.isEmpty) return false;
+    final lowerUrl = url.toLowerCase();
+    for (final pattern in patterns) {
+      if (lowerUrl.contains(pattern.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

@@ -131,6 +131,45 @@ class TrackNotifier extends Notifier<TrackState> {
     state = TrackState(isLoading: true, hasSearchText: state.hasSearchText);
 
     try {
+      // First, check if any extension can handle this URL
+      final extensionHandler = await PlatformBridge.findURLHandler(url);
+      if (extensionHandler != null) {
+        _log.i('Found extension URL handler: $extensionHandler for URL: $url');
+        final result = await PlatformBridge.handleURLWithExtension(url);
+        if (!_isRequestValid(requestId)) return;
+        
+        if (result != null) {
+          final type = result['type'] as String?;
+          final extensionId = result['extension_id'] as String?;
+          
+          if (type == 'track' && result['track'] != null) {
+            final trackData = result['track'] as Map<String, dynamic>;
+            final track = _parseSearchTrack(trackData, source: extensionId);
+            state = TrackState(
+              tracks: [track],
+              isLoading: false,
+              coverUrl: track.coverUrl,
+              searchExtensionId: extensionId,
+            );
+            return;
+          } else if ((type == 'album' || type == 'playlist') && result['tracks'] != null) {
+            final trackList = result['tracks'] as List<dynamic>;
+            final tracks = trackList.map((t) => _parseSearchTrack(t as Map<String, dynamic>, source: extensionId)).toList();
+            state = TrackState(
+              tracks: tracks,
+              isLoading: false,
+              albumId: result['album']?['id'] as String?,
+              albumName: result['name'] as String? ?? result['album']?['name'] as String?,
+              playlistName: type == 'playlist' ? result['name'] as String? : null,
+              coverUrl: result['cover_url'] as String?,
+              searchExtensionId: extensionId,
+            );
+            return;
+          }
+        }
+      }
+      
+      // No extension handler found, try Spotify URL parsing
       final parsed = await PlatformBridge.parseSpotifyUrl(url);
       if (!_isRequestValid(requestId)) return; // Request cancelled
       

@@ -1506,6 +1506,127 @@ func GetSearchProvidersJSON() (string, error) {
 	return string(jsonBytes), nil
 }
 
+// ==================== EXTENSION URL HANDLER ====================
+
+// HandleURLWithExtensionJSON tries to handle a URL with any matching extension
+// Returns JSON with type, tracks, album info, etc.
+func HandleURLWithExtensionJSON(url string) (string, error) {
+	manager := GetExtensionManager()
+	result, extensionID, err := manager.HandleURLWithExtension(url)
+	if err != nil {
+		return "", err
+	}
+
+	// Build response
+	response := map[string]interface{}{
+		"type":         result.Type,
+		"extension_id": extensionID,
+		"name":         result.Name,
+		"cover_url":    result.CoverURL,
+	}
+
+	// Add track if single track
+	if result.Track != nil {
+		response["track"] = map[string]interface{}{
+			"id":           result.Track.ID,
+			"name":         result.Track.Name,
+			"artists":      result.Track.Artists,
+			"album_name":   result.Track.AlbumName,
+			"album_artist": result.Track.AlbumArtist,
+			"duration_ms":  result.Track.DurationMS,
+			"images":       result.Track.ResolvedCoverURL(),
+			"release_date": result.Track.ReleaseDate,
+			"track_number": result.Track.TrackNumber,
+			"disc_number":  result.Track.DiscNumber,
+			"isrc":         result.Track.ISRC,
+			"provider_id":  result.Track.ProviderID,
+		}
+	}
+
+	// Add tracks if multiple
+	if len(result.Tracks) > 0 {
+		tracks := make([]map[string]interface{}, len(result.Tracks))
+		for i, track := range result.Tracks {
+			tracks[i] = map[string]interface{}{
+				"id":           track.ID,
+				"name":         track.Name,
+				"artists":      track.Artists,
+				"album_name":   track.AlbumName,
+				"album_artist": track.AlbumArtist,
+				"duration_ms":  track.DurationMS,
+				"images":       track.ResolvedCoverURL(),
+				"release_date": track.ReleaseDate,
+				"track_number": track.TrackNumber,
+				"disc_number":  track.DiscNumber,
+				"isrc":         track.ISRC,
+				"provider_id":  track.ProviderID,
+			}
+		}
+		response["tracks"] = tracks
+	}
+
+	// Add album info if present
+	if result.Album != nil {
+		response["album"] = map[string]interface{}{
+			"id":           result.Album.ID,
+			"name":         result.Album.Name,
+			"artists":      result.Album.Artists,
+			"cover_url":    result.Album.CoverURL,
+			"release_date": result.Album.ReleaseDate,
+			"total_tracks": result.Album.TotalTracks,
+		}
+	}
+
+	// Add artist info if present
+	if result.Artist != nil {
+		response["artist"] = map[string]interface{}{
+			"id":        result.Artist.ID,
+			"name":      result.Artist.Name,
+			"image_url": result.Artist.ImageURL,
+		}
+	}
+
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonBytes), nil
+}
+
+// FindURLHandlerJSON finds an extension that can handle the given URL
+// Returns extension ID or empty string if none found
+func FindURLHandlerJSON(url string) string {
+	manager := GetExtensionManager()
+	handler := manager.FindURLHandler(url)
+	if handler == nil {
+		return ""
+	}
+	return handler.extension.ID
+}
+
+// GetURLHandlersJSON returns all extensions that handle custom URLs
+func GetURLHandlersJSON() (string, error) {
+	manager := GetExtensionManager()
+	handlers := manager.GetURLHandlers()
+
+	result := make([]map[string]interface{}, 0, len(handlers))
+	for _, h := range handlers {
+		result = append(result, map[string]interface{}{
+			"id":           h.extension.ID,
+			"display_name": h.extension.Manifest.DisplayName,
+			"patterns":     h.extension.Manifest.URLHandler.Patterns,
+		})
+	}
+
+	jsonBytes, err := json.Marshal(result)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonBytes), nil
+}
+
 // ==================== EXTENSION POST-PROCESSING ====================
 
 // RunPostProcessingJSON runs post-processing hooks on a file

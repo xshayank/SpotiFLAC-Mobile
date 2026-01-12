@@ -981,6 +981,69 @@ func (p *ExtensionProviderWrapper) CustomSearch(query string, options map[string
 	return tracks, nil
 }
 
+// ==================== Custom URL Handler ====================
+
+// ExtURLHandleResult represents the result of URL handling
+type ExtURLHandleResult struct {
+	Type     string             `json:"type"`                // "track", "album", "playlist", "artist"
+	Track    *ExtTrackMetadata  `json:"track,omitempty"`     // For single track
+	Tracks   []ExtTrackMetadata `json:"tracks,omitempty"`    // For album/playlist
+	Album    *ExtAlbumMetadata  `json:"album,omitempty"`     // Album info
+	Artist   *ExtArtistMetadata `json:"artist,omitempty"`    // Artist info
+	Name     string             `json:"name,omitempty"`      // Playlist/album name
+	CoverURL string             `json:"cover_url,omitempty"` // Cover image
+}
+
+// HandleURL processes a URL using the extension's URL handler
+func (p *ExtensionProviderWrapper) HandleURL(url string) (*ExtURLHandleResult, error) {
+	if !p.extension.Manifest.HasURLHandler() {
+		return nil, fmt.Errorf("extension '%s' does not support URL handling", p.extension.ID)
+	}
+
+	if !p.extension.Enabled {
+		return nil, fmt.Errorf("extension '%s' is disabled", p.extension.ID)
+	}
+
+	script := fmt.Sprintf(`
+		(function() {
+			if (typeof extension !== 'undefined' && typeof extension.handleUrl === 'function') {
+				return extension.handleUrl(%q);
+			}
+			return null;
+		})()
+	`, url)
+
+	result, err := p.vm.RunString(script)
+	if err != nil {
+		return nil, fmt.Errorf("handleUrl failed: %w", err)
+	}
+
+	if result == nil || goja.IsUndefined(result) || goja.IsNull(result) {
+		return nil, fmt.Errorf("handleUrl returned null - URL not recognized")
+	}
+
+	exported := result.Export()
+	jsonBytes, err := json.Marshal(exported)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result: %w", err)
+	}
+
+	var handleResult ExtURLHandleResult
+	if err := json.Unmarshal(jsonBytes, &handleResult); err != nil {
+		return nil, fmt.Errorf("failed to parse URL handle result: %w", err)
+	}
+
+	// Set provider ID on tracks
+	if handleResult.Track != nil {
+		handleResult.Track.ProviderID = p.extension.ID
+	}
+	for i := range handleResult.Tracks {
+		handleResult.Tracks[i].ProviderID = p.extension.ID
+	}
+
+	return &handleResult, nil
+}
+
 // ==================== Custom Track Matching ====================
 
 // MatchTrackResult represents the result of custom track matching
@@ -1118,6 +1181,48 @@ func (m *ExtensionManager) GetSearchProviders() []*ExtensionProviderWrapper {
 		}
 	}
 	return providers
+}
+
+// GetURLHandlers returns all extensions that handle custom URLs
+func (m *ExtensionManager) GetURLHandlers() []*ExtensionProviderWrapper {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var providers []*ExtensionProviderWrapper
+	for _, ext := range m.extensions {
+		if ext.Enabled && ext.Manifest.HasURLHandler() && ext.Error == "" {
+			providers = append(providers, NewExtensionProviderWrapper(ext))
+		}
+	}
+	return providers
+}
+
+// FindURLHandler finds an extension that can handle the given URL
+func (m *ExtensionManager) FindURLHandler(url string) *ExtensionProviderWrapper {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, ext := range m.extensions {
+		if ext.Enabled && ext.Manifest.MatchesURL(url) && ext.Error == "" {
+			return NewExtensionProviderWrapper(ext)
+		}
+	}
+	return nil
+}
+
+// HandleURLWithExtension tries to handle a URL with any matching extension
+func (m *ExtensionManager) HandleURLWithExtension(url string) (*ExtURLHandleResult, string, error) {
+	handler := m.FindURLHandler(url)
+	if handler == nil {
+		return nil, "", fmt.Errorf("no extension found to handle URL: %s", url)
+	}
+
+	result, err := handler.HandleURL(url)
+	if err != nil {
+		return nil, handler.extension.ID, err
+	}
+
+	return result, handler.extension.ID, nil
 }
 
 // GetPostProcessingProviders returns all extensions that provide post-processing

@@ -551,6 +551,27 @@ class MainActivity: FlutterActivity() {
                             }
                             result.success(response)
                         }
+                        // Extension URL Handler API
+                        "handleURLWithExtension" -> {
+                            val url = call.argument<String>("url") ?: ""
+                            val response = withContext(Dispatchers.IO) {
+                                Gobackend.handleURLWithExtensionJSON(url)
+                            }
+                            result.success(response)
+                        }
+                        "findURLHandler" -> {
+                            val url = call.argument<String>("url") ?: ""
+                            val response = withContext(Dispatchers.IO) {
+                                Gobackend.findURLHandlerJSON(url)
+                            }
+                            result.success(response)
+                        }
+                        "getURLHandlers" -> {
+                            val response = withContext(Dispatchers.IO) {
+                                Gobackend.getURLHandlersJSON()
+                            }
+                            result.success(response)
+                        }
                         // Extension Post-Processing API
                         "runPostProcessing" -> {
                             val filePath = call.argument<String>("file_path") ?: ""

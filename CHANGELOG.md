@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.0.0-alpha.4] - Upcoming
+
+### Added
+
+- **Custom URL Handler for Extensions**: Extensions can now register custom URL patterns
+  - Handle URLs from YouTube Music, SoundCloud, Bandcamp, etc.
+  - Manifest config: `urlHandler: { enabled: true, patterns: ["music.youtube.com"] }`
+  - Implement `handleURL(url)` function in extension to parse and return track metadata
+  - SpotiFLAC automatically routes matching URLs to the appropriate extension
+  - Supports share intents and paste from clipboard
+
+### Documentation
+
+- Updated `docs/EXTENSION_DEVELOPMENT.md`:
+  - Added Custom URL Handler section with examples
+  - Added `handleURL` function documentation
+  - Added URL pattern examples for YouTube, SoundCloud, Bandcamp
+
+---
+
 ## [3.0.0-alpha.3] - 2026-01-12
 
 ### Added

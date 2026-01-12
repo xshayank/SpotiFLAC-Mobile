@@ -753,6 +753,40 @@ class PlatformBridge {
     return list.map((e) => e as Map<String, dynamic>).toList();
   }
 
+  // ==================== EXTENSION URL HANDLER ====================
+
+  /// Handle a URL with any matching extension
+  /// Returns null if no extension can handle the URL
+  static Future<Map<String, dynamic>?> handleURLWithExtension(String url) async {
+    try {
+      final result = await _channel.invokeMethod('handleURLWithExtension', {
+        'url': url,
+      });
+      if (result == null || result == '') return null;
+      return jsonDecode(result as String) as Map<String, dynamic>;
+    } catch (e) {
+      // No extension found or error handling URL
+      return null;
+    }
+  }
+
+  /// Find an extension that can handle the given URL
+  /// Returns extension ID or null if none found
+  static Future<String?> findURLHandler(String url) async {
+    final result = await _channel.invokeMethod('findURLHandler', {
+      'url': url,
+    });
+    if (result == null || result == '') return null;
+    return result as String;
+  }
+
+  /// Get all extensions that handle custom URLs
+  static Future<List<Map<String, dynamic>>> getURLHandlers() async {
+    final result = await _channel.invokeMethod('getURLHandlers');
+    final list = jsonDecode(result as String) as List<dynamic>;
+    return list.map((e) => e as Map<String, dynamic>).toList();
+  }
+
   // ==================== EXTENSION POST-PROCESSING ====================
 
   /// Run post-processing hooks on a file

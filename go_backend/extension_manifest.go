@@ -74,6 +74,12 @@ type SearchBehaviorConfig struct {
 	ThumbnailHeight int    `json:"thumbnailHeight,omitempty"` // Custom thumbnail height in pixels
 }
 
+// URLHandlerConfig defines custom URL handling for an extension
+type URLHandlerConfig struct {
+	Enabled  bool     `json:"enabled"`            // Whether extension handles URLs
+	Patterns []string `json:"patterns,omitempty"` // URL patterns to match (e.g., "music.youtube.com", "soundcloud.com")
+}
+
 // TrackMatchingConfig defines custom track matching behavior
 type TrackMatchingConfig struct {
 	CustomMatching    bool   `json:"customMatching"`              // Whether extension handles matching
@@ -113,6 +119,7 @@ type ExtensionManifest struct {
 	SkipMetadataEnrichment bool                  `json:"skipMetadataEnrichment,omitempty"` // If true, don't enrich metadata from Deezer/Spotify
 	SkipBuiltInFallback    bool                  `json:"skipBuiltInFallback,omitempty"`    // If true, don't fallback to built-in providers (tidal/qobuz/amazon)
 	SearchBehavior         *SearchBehaviorConfig `json:"searchBehavior,omitempty"`         // Custom search behavior
+	URLHandler             *URLHandlerConfig     `json:"urlHandler,omitempty"`             // Custom URL handling
 	TrackMatching          *TrackMatchingConfig  `json:"trackMatching,omitempty"`          // Custom track matching
 	PostProcessing         *PostProcessingConfig `json:"postProcessing,omitempty"`         // Post-processing hooks
 }
@@ -268,6 +275,29 @@ func (m *ExtensionManifest) HasCustomMatching() bool {
 // HasPostProcessing returns true if extension provides post-processing
 func (m *ExtensionManifest) HasPostProcessing() bool {
 	return m.PostProcessing != nil && m.PostProcessing.Enabled
+}
+
+// HasURLHandler returns true if extension handles custom URLs
+func (m *ExtensionManifest) HasURLHandler() bool {
+	return m.URLHandler != nil && m.URLHandler.Enabled && len(m.URLHandler.Patterns) > 0
+}
+
+// MatchesURL checks if a URL matches any of the extension's URL patterns
+func (m *ExtensionManifest) MatchesURL(urlStr string) bool {
+	if !m.HasURLHandler() {
+		return false
+	}
+
+	// Parse URL to get host
+	urlStr = strings.ToLower(strings.TrimSpace(urlStr))
+	for _, pattern := range m.URLHandler.Patterns {
+		pattern = strings.ToLower(strings.TrimSpace(pattern))
+		// Check if URL contains the pattern (host match)
+		if strings.Contains(urlStr, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetPostProcessingHooks returns all post-processing hooks
