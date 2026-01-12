@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.0.0-alpha.3] - Upcoming
+## [3.0.0-alpha.3] - 2026-01-12
 
 ### Added
 
