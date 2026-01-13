@@ -5,6 +5,7 @@
 ### Security
 
 - Improved extension sandbox security
+- Improved credential encryption with per-installation random salt
 
 ### Changed
 
@@ -17,6 +18,10 @@
   }
   ```
   Extensions that need to download files must declare `"file": true` in manifest.
+
+### Fixed
+
+- Extension packages now preserve directory structure (subdirectories supported)
 
 ---
 

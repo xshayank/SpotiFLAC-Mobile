@@ -191,14 +191,26 @@ func (m *ExtensionManager) LoadExtensionFromFile(filePath string) (*LoadedExtens
 		return nil, fmt.Errorf("failed to create extension directory: %w", err)
 	}
 
-	// Extract all files
+	// Extract all files (preserving directory structure)
 	for _, file := range zipReader.File {
 		if file.FileInfo().IsDir() {
 			continue
 		}
 
-		// Get relative path within the zip
-		destPath := filepath.Join(extDir, filepath.Base(file.Name))
+		// Preserve relative path within the zip (support subdirectories)
+		// Clean the path to prevent path traversal attacks
+		relPath := filepath.Clean(file.Name)
+		if strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
+			GoLog("[Extension] Skipping unsafe path in archive: %s\n", file.Name)
+			continue
+		}
+		destPath := filepath.Join(extDir, relPath)
+
+		// Create parent directories if needed
+		destDir := filepath.Dir(destPath)
+		if err := os.MkdirAll(destDir, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create directory %s: %w", destDir, err)
+		}
 
 		// Create destination file
 		destFile, err := os.Create(destPath)
@@ -604,14 +616,26 @@ func (m *ExtensionManager) UpgradeExtension(filePath string) (*LoadedExtension, 
 		return nil, fmt.Errorf("failed to create extension directory: %w", err)
 	}
 
-	// Extract all files from new package
+	// Extract all files from new package (preserving directory structure)
 	for _, file := range zipReader.File {
 		if file.FileInfo().IsDir() {
 			continue
 		}
 
-		// Get relative path within the zip
-		destPath := filepath.Join(extDir, filepath.Base(file.Name))
+		// Preserve relative path within the zip (support subdirectories)
+		// Clean the path to prevent path traversal attacks
+		relPath := filepath.Clean(file.Name)
+		if strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
+			GoLog("[Extension] Skipping unsafe path in archive: %s\n", file.Name)
+			continue
+		}
+		destPath := filepath.Join(extDir, relPath)
+
+		// Create parent directories if needed
+		destDir := filepath.Dir(destPath)
+		if err := os.MkdirAll(destDir, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create directory %s: %w", destDir, err)
+		}
 
 		// Create destination file
 		destFile, err := os.Create(destPath)
