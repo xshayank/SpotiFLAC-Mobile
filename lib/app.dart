@@ -9,7 +9,6 @@ import 'package:spotiflac_android/theme/dynamic_color_wrapper.dart';
 import 'package:spotiflac_android/l10n/app_localizations.dart';
 
 final _routerProvider = Provider<GoRouter>((ref) {
-  // Only watch isFirstLaunch to prevent router rebuild on other settings changes
   final isFirstLaunch = ref.watch(settingsProvider.select((s) => s.isFirstLaunch));
   
   return GoRouter(
@@ -35,7 +34,6 @@ class SpotiFLACApp extends ConsumerWidget {
     final router = ref.watch(_routerProvider);
     final localeString = ref.watch(settingsProvider.select((s) => s.locale));
     
-    // Convert locale string to Locale object
     Locale? locale;
     if (localeString != 'system') {
       locale = Locale(localeString);

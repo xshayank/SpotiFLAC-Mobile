@@ -89,14 +89,12 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen> {
     try {
       Map<String, dynamic> metadata;
       
-      // Check if this is a Deezer album ID (format: "deezer:123456")
       if (widget.albumId.startsWith('deezer:')) {
         final deezerAlbumId = widget.albumId.replaceFirst('deezer:', '');
         // ignore: avoid_print
         print('[AlbumScreen] Fetching from Deezer: $deezerAlbumId');
         metadata = await PlatformBridge.getDeezerMetadata('album', deezerAlbumId);
       } else {
-        // Spotify album - use fallback method
         // ignore: avoid_print
         print('[AlbumScreen] Fetching from Spotify with fallback: ${widget.albumId}');
         final url = 'https://open.spotify.com/album/${widget.albumId}';
@@ -448,7 +446,6 @@ class _AlbumTrackItem extends ConsumerWidget {
       return state.items.where((item) => item.track.id == track.id).firstOrNull;
     }));
     
-    // Check if track is in history (already downloaded before)
     final isInHistory = ref.watch(downloadHistoryProvider.select((state) {
       return state.isDownloaded(track.id);
     }));

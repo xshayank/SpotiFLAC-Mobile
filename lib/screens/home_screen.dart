@@ -329,7 +329,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
   
   Future<void> _openCollection(Track track) async {
-    // Get the extension ID from the track source
     final extensionId = track.source;
     if (extensionId == null) return;
     

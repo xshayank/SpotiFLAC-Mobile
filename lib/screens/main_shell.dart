@@ -36,7 +36,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
-    // Check for updates after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForUpdates();
       _setupShareListener();
@@ -44,7 +43,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   void _setupShareListener() {
-    // Check for pending URL that was received before listener was ready
     final pendingUrl = ShareIntentService().consumePendingUrl();
     if (pendingUrl != null) {
       _log.d('Processing pending shared URL: $pendingUrl');
@@ -124,8 +122,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _onPageChanged(int index) {
     if (_currentIndex != index) {
       setState(() => _currentIndex = index);
-      // Unfocus any text field when switching tabs to prevent keyboard from appearing
-      // Use primaryFocus for more aggressive unfocus that works with keep-alive widgets
       FocusManager.instance.primaryFocus?.unfocus();
     }
   }
@@ -134,7 +130,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   void _handleBackPress() {
     final trackState = ref.read(trackProvider);
     
-    // Check if keyboard is visible - if so, just dismiss keyboard, don't clear search
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     if (isKeyboardVisible) {
       FocusManager.instance.primaryFocus?.unfocus();
@@ -144,7 +139,6 @@ class _MainShellState extends ConsumerState<MainShell> {
     // If on Home tab and showing recent access mode, exit it
     if (_currentIndex == 0 && trackState.isShowingRecentAccess) {
       ref.read(trackProvider.notifier).setShowingRecentAccess(false);
-      // Also unfocus search bar when exiting recent access mode
       FocusManager.instance.primaryFocus?.unfocus();
       return;
     }
@@ -189,7 +183,6 @@ class _MainShellState extends ConsumerState<MainShell> {
     final showStore = ref.watch(settingsProvider.select((s) => s.showExtensionStore));
     final storeUpdatesCount = ref.watch(storeProvider.select((s) => s.updatesAvailableCount));
     
-    // Check if keyboard is visible (bottom inset > 0 means keyboard is showing)
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     
     // Determine if we can pop (for predictive back animation)
@@ -202,7 +195,6 @@ class _MainShellState extends ConsumerState<MainShell> {
                    !trackState.isShowingRecentAccess &&
                    !isKeyboardVisible;
 
-    // Build tabs and destinations based on settings
     final tabs = <Widget>[
       const HomeTab(),
       QueueTab(

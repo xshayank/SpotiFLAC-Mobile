@@ -159,7 +159,6 @@ class _DownloadedAlbumScreenState extends ConsumerState<DownloadedAlbumScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     
-    // Watch history and get tracks for this album (reactive!)
     final allHistoryItems = ref.watch(downloadHistoryProvider.select((s) => s.items));
     final tracks = _getAlbumTracks(allHistoryItems);
     

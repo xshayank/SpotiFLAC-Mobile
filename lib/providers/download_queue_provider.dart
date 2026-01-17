@@ -415,11 +415,9 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
           state = state.copyWith(items: pendingItems);
           _log.i('Restored ${pendingItems.length} pending items from storage');
 
-          // Auto-resume queue processing
           Future.microtask(() => _processQueue());
         } else {
           _log.d('No pending items to restore');
-          // Clear storage since nothing to restore
           await prefs.remove(_queueStorageKey);
         }
       } else {
@@ -603,7 +601,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
     if (state.outputDir.isEmpty) {
       try {
         if (Platform.isIOS) {
-          // iOS: Use Documents directory (accessible via Files app)
           final dir = await getApplicationDocumentsDirectory();
           final musicDir = Directory('${dir.path}/SpotiFLAC');
           if (!await musicDir.exists()) {
@@ -1347,7 +1344,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
       return;
     }
 
-    // Set currentDownload for UI reference
     state = state.copyWith(currentDownload: item);
 
     updateItemStatus(item.id, DownloadStatus.downloading);
@@ -1408,7 +1404,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
                 releaseDate: data['release_date'] as String?,
                 deezerId: rawId,
                 availability: trackToDownload.availability,
-                // Preserve albumType from API response or original track
                 albumType: (data['album_type'] as String?) ?? trackToDownload.albumType,
                 source: trackToDownload.source,
               );
@@ -1439,7 +1434,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
         albumFolderStructure: settings.albumFolderStructure,
       );
 
-      // Use quality override if set, otherwise use default from settings
       final quality = item.qualityOverride ?? state.audioQuality;
 
       Map<String, dynamic> result;
@@ -1449,7 +1443,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
       final useExtensions = settings.useExtensionProviders && hasActiveExtensions;
 
       if (useExtensions) {
-        // Use extension providers (includes fallback to built-in services)
         _log.d('Using extension providers for download');
         _log.d(
           'Quality: $quality${item.qualityOverride != null ? ' (override)' : ''}',
@@ -1528,7 +1521,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
       );
       if (currentItem.status == DownloadStatus.skipped) {
         _log.i('Download was cancelled, skipping result processing');
-        // Delete the downloaded file if it exists
         final filePath = result['file_path'] as String?;
         if (filePath != null && result['success'] == true) {
           try {
@@ -1614,7 +1606,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
                         'Backend metadata - Track: $backendTrackNum, Disc: $backendDiscNum, Year: $backendYear',
                       );
 
-                      // Create updated track object with safety check for 0/null
                       final newTrackNumber =
                           (backendTrackNum != null && backendTrackNum > 0)
                           ? backendTrackNum
@@ -1647,7 +1638,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
                       );
                     }
 
-                    // Use enriched/updated track for metadata embedding
                     await _embedMetadataAndCover(flacPath, finalTrack);
                     _log.d('Metadata and cover embedded successfully');
                   } catch (e) {
@@ -1714,7 +1704,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
           final backendSampleRate = result['actual_sample_rate'] as int?;
           final backendISRC = result['isrc'] as String?;
 
-          // Log cover URL for debugging
           _log.d('Saving to history - coverUrl: ${trackToDownload.coverUrl}');
 
           final historyAlbumArtist =
@@ -1782,7 +1771,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
           return;
         }
 
-        // Convert error type string to enum
         DownloadErrorType errorType;
         switch (errorTypeStr) {
           case 'not_found':

@@ -222,7 +222,6 @@ class _PlaylistTrackItem extends ConsumerWidget {
       return state.items.where((item) => item.track.id == track.id).firstOrNull;
     }));
     
-    // Check if track is in history (already downloaded before)
     final isInHistory = ref.watch(downloadHistoryProvider.select((state) {
       return state.isDownloaded(track.id);
     }));

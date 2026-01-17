@@ -112,7 +112,6 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
       );
     });
     
-    // If this is an extension artist, use provided data only - don't fetch from Spotify/Deezer
     if (widget.extensionId != null) {
       _albums = widget.albums;
       _topTracks = widget.topTracks;
@@ -122,8 +121,6 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
       return;
     }
     
-    // Priority: widget data > cache > fetch
-    // But always fetch if topTracks is missing (to get popular tracks)
     final cached = _ArtistCache.get(widget.artistId);
     
     if (widget.albums != null) {
@@ -132,7 +129,6 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
       _headerImageUrl = widget.headerImageUrl;
       _monthlyListeners = widget.monthlyListeners;
       
-      // If we have albums but no top tracks, fetch to get them
       if (_topTracks == null || _topTracks!.isEmpty) {
         _fetchDiscography();
       }
@@ -159,14 +155,12 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
       String? headerImage;
       int? listeners;
       
-      // Check if this is a Deezer artist ID (format: "deezer:123456")
       if (widget.artistId.startsWith('deezer:')) {
         final deezerArtistId = widget.artistId.replaceFirst('deezer:', '');
         final metadata = await PlatformBridge.getDeezerMetadata('artist', deezerArtistId);
         final albumsList = metadata['albums'] as List<dynamic>;
         albums = albumsList.map((a) => _parseArtistAlbum(a as Map<String, dynamic>)).toList();
       } else {
-        // Spotify artist - use extension handler via URL
         final url = 'https://open.spotify.com/artist/${widget.artistId}';
         final result = await PlatformBridge.handleURLWithExtension(url);
         
@@ -302,8 +296,6 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
 
   /// Build Spotify-style header with full-width image and artist name overlay
   Widget _buildHeader(BuildContext context, ColorScheme colorScheme) {
-    // Use header image if available, otherwise fall back to cover URL
-    // Prefer: fetched header > widget header > widget cover
     String? imageUrl = _headerImageUrl;
     if (imageUrl == null || imageUrl.isEmpty) {
       imageUrl = widget.headerImageUrl;
@@ -467,7 +459,6 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen> {
       return state.items.where((item) => item.track.id == track.id).firstOrNull;
     }));
     
-    // Check if track is in history (already downloaded before)
     final isInHistory = ref.watch(downloadHistoryProvider.select((state) {
       return state.isDownloaded(track.id);
     }));

@@ -55,7 +55,6 @@ class LogBuffer extends ChangeNotifier {
   static bool get loggingEnabled => _loggingEnabled;
   static set loggingEnabled(bool value) {
     _loggingEnabled = value;
-    // Also notify Go backend about logging state
     if (value) {
       PlatformBridge.setGoLoggingEnabled(true).catchError((_) {});
     } else {
@@ -121,7 +120,6 @@ class LogBuffer extends ChangeNotifier {
               );
             }
           } catch (_) {
-            // Use current time if parsing fails
           }
         }
         
@@ -146,7 +144,6 @@ class LogBuffer extends ChangeNotifier {
   void clear() {
     _entries.clear();
     _lastGoLogIndex = 0;
-    // Also clear Go backend logs
     PlatformBridge.clearGoLogs().catchError((_) {});
     notifyListeners();
   }
@@ -249,8 +246,6 @@ class AppLogger {
   late final Logger? _logger;
 
   AppLogger(this._tag) {
-    // Only create Logger instance in debug mode
-    // In release mode, we write directly to LogBuffer
     if (kDebugMode) {
       _logger = Logger(
         printer: SimplePrinter(printTime: false, colors: false),
@@ -276,7 +271,6 @@ class AppLogger {
     if (kDebugMode) {
       _logger?.d(message);
     } else {
-      // In release mode, write directly to buffer
       _addToBuffer('DEBUG', message);
     }
   }

@@ -49,7 +49,6 @@ func getProgress() DownloadProgress {
 	multiMu.RLock()
 	defer multiMu.RUnlock()
 
-	// Find first active item
 	for _, item := range multiProgress.Items {
 		return DownloadProgress{
 			CurrentFile:   item.ItemID,
@@ -249,10 +248,7 @@ func (pw *ItemProgressWriter) Write(p []byte) (int, error) {
 	}
 	pw.current += int64(n)
 
-	// Update progress when we've received at least 64KB since last update
-	// Also update on first write to show download has started
 	if pw.lastReported == 0 || pw.current-pw.lastReported >= progressUpdateThreshold {
-		// Calculate speed (MB/s) based on bytes received since last update
 		now := time.Now()
 		elapsed := now.Sub(pw.lastTime).Seconds()
 		var speedMBps float64

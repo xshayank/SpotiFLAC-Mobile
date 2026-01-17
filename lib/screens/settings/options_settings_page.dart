@@ -838,7 +838,6 @@ class _MetadataSourceSelector extends ConsumerWidget {
                 // Not selected if extension is active
                 isSelected: currentSource == 'deezer' && !hasExtensionSearch,
                 onTap: () {
-                  // If extension was active, reset it to default
                   if (hasExtensionSearch) {
                     ref.read(settingsProvider.notifier).setSearchProvider(null);
                   }

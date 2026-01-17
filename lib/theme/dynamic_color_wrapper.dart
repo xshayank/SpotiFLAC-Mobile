@@ -45,7 +45,6 @@ class DynamicColorWrapper extends ConsumerWidget {
           darkScheme = _applyAmoledColors(darkScheme);
         }
 
-        // Build themes
         final lightTheme = AppTheme.light(dynamicScheme: lightScheme);
         final darkTheme = AppTheme.dark(dynamicScheme: darkScheme, isAmoled: themeSettings.useAmoled);
 

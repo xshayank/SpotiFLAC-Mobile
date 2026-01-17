@@ -76,10 +76,8 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
   }  void _onSearchChanged() {
     final text = _urlController.text.trim();
     
-    // Update search text state for MainShell back button handling
     ref.read(trackProvider.notifier).setSearchText(text.isNotEmpty);
     
-    // Update typing state immediately for UI transition
     if (text.isNotEmpty && !_isTyping) {
       setState(() => _isTyping = true);
     } else if (text.isEmpty && _isTyping) {
@@ -103,17 +101,13 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
     if (_lastSearchQuery == searchKey) return;
     _lastSearchQuery = searchKey;
     
-    // Check if extension search provider is set AND still enabled
     final isExtensionEnabled = searchProvider != null && 
         searchProvider.isNotEmpty &&
         extState.extensions.any((e) => e.id == searchProvider && e.enabled);
     
     if (isExtensionEnabled) {
-      // Use custom search from extension
       await ref.read(trackProvider.notifier).customSearch(searchProvider, query);
     } else {
-      // Use default search (Deezer/Spotify)
-      // Also clear searchProvider if it was set but extension is disabled
       if (searchProvider != null && searchProvider.isNotEmpty && !isExtensionEnabled) {
         ref.read(settingsProvider.notifier).setSearchProvider(null);
       }
@@ -238,7 +232,6 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
     int currentProgress = 0;
     int totalTracks = 0;
     
-    // Use StatefulBuilder to update dialog content
     bool dialogShown = false;
     StateSetter? setDialogState;
     
@@ -322,8 +315,6 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
               action: SnackBarAction(
                 label: l10n.snackbarViewQueue,
                 onPressed: () {
-                   // Navigate to queue tab (handled by main_shell index)
-                   // We don't have direct access to set index here easily without provider
                 },
               ),
             ),
@@ -348,14 +339,12 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
       }
     });
     
-    // Use select() to only rebuild when specific fields change
     final tracks = ref.watch(trackProvider.select((s) => s.tracks));
     final searchArtists = ref.watch(trackProvider.select((s) => s.searchArtists));
     final isLoading = ref.watch(trackProvider.select((s) => s.isLoading));
     final error = ref.watch(trackProvider.select((s) => s.error));
     final hasSearchedBefore = ref.watch(settingsProvider.select((s) => s.hasSearchedBefore));
     
-    // Watch extension state to update search hint when extensions load/change
     ref.watch(extensionProvider.select((s) => s.isInitialized));
     ref.watch(extensionProvider.select((s) => s.extensions));
     
@@ -612,7 +601,6 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
     // Merge with recent downloads to make the list more populated
     final historyItems = ref.read(downloadHistoryProvider).items;
     
-    // Convert download history to RecentAccessItem format
     final downloadItems = historyItems.take(10).where((h) => h.spotifyId != null && h.spotifyId!.isNotEmpty).map((h) => RecentAccessItem(
       id: h.spotifyId!,
       name: h.trackName,
@@ -748,7 +736,6 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
                   ],
                 ),
               ),
-              // Delete button (like Spotify's X)
               IconButton(
                 icon: Icon(Icons.close, size: 20, color: colorScheme.onSurfaceVariant),
                 onPressed: () {
@@ -767,7 +754,6 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
     
     switch (item.type) {
       case RecentAccessType.artist:
-        // Check if artist is from extension (not spotify/deezer)
         if (item.providerId != null && item.providerId!.isNotEmpty && item.providerId != 'deezer' && item.providerId != 'spotify') {
           Navigator.push(context, MaterialPageRoute(
             builder: (context) => ExtensionArtistScreen(
@@ -1389,16 +1375,13 @@ class _TrackItemWithStatus extends ConsumerWidget {
       return state.items.where((item) => item.track.id == track.id).firstOrNull;
     }));
     
-    // Check if track is in history (already downloaded before)
     final isInHistory = ref.watch(downloadHistoryProvider.select((state) {
       return state.isDownloaded(track.id);
     }));
     
-    // Get thumbnail size from extension if track is from extension
     double thumbWidth = 56;
     double thumbHeight = 56;
     
-    // Get extension ID from track.source or from TrackState.searchExtensionId
     final trackState = ref.watch(trackProvider);
     final extensionId = track.source ?? trackState.searchExtensionId;
     
@@ -1499,7 +1482,6 @@ class _TrackItemWithStatus extends ConsumerWidget {
     // If already in queue, do nothing
     if (isQueued) return;
     
-    // If in history, check if file still exists
     if (isInHistory) {
       final historyItem = ref.read(downloadHistoryProvider.notifier).getBySpotifyId(track.id);
       if (historyItem != null) {

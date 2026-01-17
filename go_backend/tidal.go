@@ -118,7 +118,6 @@ func NewTidalDownloader() *TidalDownloader {
 			clientSecret: string(clientSecret),
 		}
 
-		// Get first available API
 		apis := globalTidalDownloader.GetAvailableAPIs()
 		if len(apis) > 0 {
 			globalTidalDownloader.apiURL = apis[0]
@@ -1451,7 +1450,6 @@ func isLatinScript(s string) bool {
 func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 	downloader := NewTidalDownloader()
 
-	// Check for existing file first
 	if existingFile, exists := checkISRCExistsInternal(req.OutputDir, req.ISRC); exists {
 		return TidalDownloadResult{FilePath: "EXISTS:" + existingFile}, nil
 	}
@@ -1519,7 +1517,6 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 		var tidalURL string
 		var slErr error
 
-		// Check if SpotifyID is actually a Deezer ID (format: "deezer:xxxxx")
 		if strings.HasPrefix(req.SpotifyID, "deezer:") {
 			deezerID := strings.TrimPrefix(req.SpotifyID, "deezer:")
 			GoLog("[Tidal] Using Deezer ID for SongLink lookup: %s\n", deezerID)
@@ -1530,12 +1527,10 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 		}
 
 		if slErr == nil && tidalURL != "" {
-			// Extract track ID and get track info
 			trackID, idErr := downloader.GetTrackIDFromURL(tidalURL)
 			if idErr == nil {
 				track, err = downloader.GetTrackInfoByID(trackID)
 				if track != nil {
-					// Get artist name from track
 					tidalArtist := track.Artist.Name
 					if len(track.Artists) > 0 {
 						var artistNames []string
@@ -1545,7 +1540,6 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 						tidalArtist = strings.Join(artistNames, ", ")
 					}
 
-					// Verify artist matches (SongLink is already accurate, no title check needed)
 					if !artistsMatch(req.ArtistName, tidalArtist) {
 						GoLog("[Tidal] Artist mismatch from SongLink: expected '%s', got '%s'. Rejecting.\n",
 							req.ArtistName, tidalArtist)
@@ -1617,12 +1611,10 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 	}
 	GoLog("[Tidal] Match found: '%s' by '%s' (duration: %ds)\n", track.Title, tidalArtist, track.Duration)
 
-	// Cache the track ID for future use
 	if req.ISRC != "" {
 		GetTrackIDCache().SetTidal(req.ISRC, track.ID)
 	}
 
-	// Build filename
 	filename := buildFilenameFromTemplate(req.FilenameFormat, map[string]interface{}{
 		"title":  req.TrackName,
 		"artist": req.ArtistName,
@@ -1634,7 +1626,6 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 	filename = sanitizeFilename(filename) + ".flac"
 	outputPath := filepath.Join(req.OutputDir, filename)
 
-	// Check if file already exists (both FLAC and M4A)
 	if fileInfo, statErr := os.Stat(outputPath); statErr == nil && fileInfo.Size() > 0 {
 		return TidalDownloadResult{FilePath: "EXISTS:" + outputPath}, nil
 	}
@@ -1650,14 +1641,12 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 		os.Remove(tmpPath)
 	}
 
-	// Determine quality to use (default to LOSSLESS if not specified)
 	quality := req.Quality
 	if quality == "" {
 		quality = "LOSSLESS"
 	}
 	GoLog("[Tidal] Using quality: %s\n", quality)
 
-	// Get download URL using parallel API requests
 	downloadInfo, err := downloader.GetDownloadURL(track.ID, quality)
 	if err != nil {
 		return TidalDownloadResult{}, fmt.Errorf("failed to get download URL: %w", err)
@@ -1702,18 +1691,13 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 	// Wait for parallel operations to complete
 	<-parallelDone
 
-	// Set progress to 100% and status to finalizing (before embedding)
-	// This makes the UI show "Finalizing..." while embedding happens
 	if req.ItemID != "" {
 		SetItemProgress(req.ItemID, 1.0, 0, 0)
 		SetItemFinalizing(req.ItemID)
 	}
 
-	// Check if file was saved as M4A (DASH stream) instead of FLAC
-	// downloadFromManifest saves DASH streams as .m4a (m4aPath already defined above)
 	actualOutputPath := outputPath
 	if _, err := os.Stat(m4aPath); err == nil {
-		// File was saved as M4A, use that path
 		actualOutputPath = m4aPath
 		GoLog("[Tidal] File saved as M4A (DASH stream): %s\n", actualOutputPath)
 	} else if _, err := os.Stat(outputPath); err != nil {
@@ -1734,7 +1718,6 @@ func downloadFromTidal(req DownloadRequest) (TidalDownloadResult, error) {
 		ISRC:        track.ISRC,         // Use actual ISRC from Tidal
 	}
 
-	// Use cover data from parallel fetch
 	var coverData []byte
 	if parallelResult != nil && parallelResult.CoverData != nil {
 		coverData = parallelResult.CoverData

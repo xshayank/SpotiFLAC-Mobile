@@ -60,12 +60,10 @@ func amazonArtistsMatch(expectedArtist, foundArtist string) bool {
 		return true
 	}
 
-	// Check if one contains the other
 	if strings.Contains(normExpected, normFound) || strings.Contains(normFound, normExpected) {
 		return true
 	}
 
-	// Check first artist (before comma or feat)
 	expectedFirst := strings.Split(normExpected, ",")[0]
 	expectedFirst = strings.Split(expectedFirst, " feat")[0]
 	expectedFirst = strings.Split(expectedFirst, " ft.")[0]
@@ -80,7 +78,6 @@ func amazonArtistsMatch(expectedArtist, foundArtist string) bool {
 		return true
 	}
 
-	// Check if first artist is contained in the other
 	if strings.Contains(expectedFirst, foundFirst) || strings.Contains(foundFirst, expectedFirst) {
 		return true
 	}
@@ -127,7 +124,6 @@ func (a *AmazonDownloader) waitForRateLimit() {
 
 	now := time.Now()
 
-	// Reset counter every minute
 	if now.Sub(a.apiCallResetTime) >= time.Minute {
 		a.apiCallCount = 0
 		a.apiCallResetTime = now
@@ -155,7 +151,6 @@ func (a *AmazonDownloader) waitForRateLimit() {
 		}
 	}
 
-	// Update tracking
 	a.lastAPICallTime = time.Now()
 	a.apiCallCount++
 }
@@ -181,8 +176,6 @@ func (a *AmazonDownloader) downloadFromDoubleDoubleService(amazonURL, _ string) 
 	for _, region := range a.regions {
 		GoLog("[Amazon] Trying region: %s...\n", region)
 
-		// Build base URL for DoubleDouble service
-		// Decode base64 service URL (same as PC)
 		serviceBase, _ := base64.StdEncoding.DecodeString("aHR0cHM6Ly8=")               // https://
 		serviceDomain, _ := base64.StdEncoding.DecodeString("LmRvdWJsZWRvdWJsZS50b3A=") // .doubledouble.top
 		baseURL := fmt.Sprintf("%s%s%s", string(serviceBase), region, string(serviceDomain))
@@ -301,7 +294,6 @@ func (a *AmazonDownloader) downloadFromDoubleDoubleService(amazonURL, _ string) 
 			if status.Status == "done" {
 				fmt.Println("\n[Amazon] Download ready!")
 
-				// Build download URL
 				fileURL := status.URL
 				if strings.HasPrefix(fileURL, "./") {
 					fileURL = fmt.Sprintf("%s/%s", baseURL, fileURL[2:])
@@ -383,7 +375,6 @@ func (a *AmazonDownloader) DownloadFile(downloadURL, outputPath, itemID string) 
 	}
 
 	expectedSize := resp.ContentLength
-	// Set total bytes if available
 	if expectedSize > 0 && itemID != "" {
 		SetItemBytesTotal(itemID, expectedSize)
 	}
@@ -393,16 +384,13 @@ func (a *AmazonDownloader) DownloadFile(downloadURL, outputPath, itemID string) 
 		return err
 	}
 
-	// Use buffered writer for better performance (256KB buffer)
 	bufWriter := bufio.NewWriterSize(out, 256*1024)
 
-	// Use item progress writer with buffered output
 	var written int64
 	if itemID != "" {
 		pw := NewItemProgressWriter(bufWriter, itemID)
 		written, err = io.Copy(pw, resp.Body)
 	} else {
-		// Fallback: direct copy without progress tracking
 		written, err = io.Copy(bufWriter, resp.Body)
 	}
 
@@ -410,7 +398,6 @@ func (a *AmazonDownloader) DownloadFile(downloadURL, outputPath, itemID string) 
 	flushErr := bufWriter.Flush()
 	closeErr := out.Close()
 
-	// Check for any errors
 	if err != nil {
 		os.Remove(outputPath)
 		if isDownloadCancelled(itemID) {
@@ -456,24 +443,19 @@ type AmazonDownloadResult struct {
 func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 	downloader := NewAmazonDownloader()
 
-	// Check for existing file first
 	if existingFile, exists := checkISRCExistsInternal(req.OutputDir, req.ISRC); exists {
 		return AmazonDownloadResult{FilePath: "EXISTS:" + existingFile}, nil
 	}
 
-	// Get Amazon URL from SongLink
 	songlink := NewSongLinkClient()
 	var availability *TrackAvailability
 	var err error
 
-	// Check if SpotifyID is actually a Deezer ID (format: "deezer:xxxxx")
 	if strings.HasPrefix(req.SpotifyID, "deezer:") {
-		// Extract Deezer ID and use Deezer-based lookup
 		deezerID := strings.TrimPrefix(req.SpotifyID, "deezer:")
 		GoLog("[Amazon] Using Deezer ID for SongLink lookup: %s\n", deezerID)
 		availability, err = songlink.CheckAvailabilityFromDeezer(deezerID)
 	} else if req.SpotifyID != "" {
-		// Use Spotify ID
 		availability, err = songlink.CheckTrackAvailability(req.SpotifyID, req.ISRC)
 	} else {
 		return AmazonDownloadResult{}, fmt.Errorf("no valid Spotify or Deezer ID provided for Amazon lookup")
@@ -487,7 +469,6 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 		return AmazonDownloadResult{}, fmt.Errorf("track not available on Amazon Music (SongLink returned no Amazon URL)")
 	}
 
-	// Create output directory if needed
 	if req.OutputDir != "." {
 		if err := os.MkdirAll(req.OutputDir, 0755); err != nil {
 			return AmazonDownloadResult{}, fmt.Errorf("failed to create output directory: %w", err)
@@ -506,10 +487,8 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 		return AmazonDownloadResult{}, fmt.Errorf("artist mismatch: expected '%s', got '%s'", req.ArtistName, artistName)
 	}
 
-	// Log match found
 	GoLog("[Amazon] Match found: '%s' by '%s'\n", trackName, artistName)
 
-	// Build filename using Spotify metadata (more accurate)
 	filename := buildFilenameFromTemplate(req.FilenameFormat, map[string]interface{}{
 		"title":  req.TrackName,
 		"artist": req.ArtistName,
@@ -521,7 +500,6 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 	filename = sanitizeFilename(filename) + ".flac"
 	outputPath := filepath.Join(req.OutputDir, filename)
 
-	// Check if file already exists
 	if fileInfo, statErr := os.Stat(outputPath); statErr == nil && fileInfo.Size() > 0 {
 		return AmazonDownloadResult{FilePath: "EXISTS:" + outputPath}, nil
 	}
@@ -552,8 +530,6 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 	// Wait for parallel operations to complete
 	<-parallelDone
 
-	// Set progress to 100% and status to finalizing (before embedding)
-	// This makes the UI show "Finalizing..." while embedding happens
 	if req.ItemID != "" {
 		SetItemProgress(req.ItemID, 1.0, 0, 0)
 		SetItemFinalizing(req.ItemID)
@@ -564,14 +540,11 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 		GoLog("[Amazon] DoubleDouble returned: %s - %s\n", artistName, trackName)
 	}
 
-	// Read existing metadata from downloaded file BEFORE embedding
-	// Amazon/DoubleDouble files often have correct track/disc numbers that we should preserve
 	existingMeta, metaErr := ReadMetadata(outputPath)
 	actualTrackNum := req.TrackNumber
 	actualDiscNum := req.DiscNumber
 
 	if metaErr == nil && existingMeta != nil {
-		// Use file metadata if it has valid track/disc numbers and request doesn't have them
 		if existingMeta.TrackNumber > 0 && (req.TrackNumber == 0 || req.TrackNumber == 1) {
 			actualTrackNum = existingMeta.TrackNumber
 			GoLog("[Amazon] Using track number from file: %d (request had: %d)\n", actualTrackNum, req.TrackNumber)
@@ -621,8 +594,6 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 
 	fmt.Println("[Amazon] ✓ Downloaded successfully from Amazon Music")
 
-	// Read actual quality from the downloaded FLAC file
-	// Amazon API doesn't provide quality info, but we can read it from the file itself
 	quality, err := GetAudioQuality(outputPath)
 	if err != nil {
 		GoLog("[Amazon] Warning: couldn't read quality from file: %v\n", err)
@@ -630,8 +601,6 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 		GoLog("[Amazon] Actual quality: %d-bit/%dHz\n", quality.BitDepth, quality.SampleRate)
 	}
 
-	// Read metadata from file AFTER embedding to get accurate values
-	// This ensures we return what's actually in the file
 	finalMeta, metaReadErr := ReadMetadata(outputPath)
 	if metaReadErr == nil && finalMeta != nil {
 		GoLog("[Amazon] Final metadata from file - Track: %d, Disc: %d, Date: %s\n",
@@ -639,7 +608,6 @@ func downloadFromAmazon(req DownloadRequest) (AmazonDownloadResult, error) {
 		actualTrackNum = finalMeta.TrackNumber
 		actualDiscNum = finalMeta.DiscNumber
 		if finalMeta.Date != "" {
-			// Use date from file if available
 			req.ReleaseDate = finalMeta.Date
 		}
 	}

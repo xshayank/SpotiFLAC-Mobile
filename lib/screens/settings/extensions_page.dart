@@ -500,7 +500,6 @@ class _MetadataPriorityItem extends ConsumerWidget {
     final extState = ref.watch(extensionProvider);
     final colorScheme = Theme.of(context).colorScheme;
     
-    // Check if any extension has metadata provider
     final hasMetadataExtensions = extState.extensions
         .any((e) => e.enabled && e.hasMetadataProvider);
     

@@ -36,7 +36,6 @@ func GetISRCIndex(outputDir string) *ISRCIndex {
 		return idx
 	}
 
-	// Build new index
 	return buildISRCIndex(outputDir)
 }
 
@@ -56,7 +55,6 @@ func buildISRCIndex(outputDir string) *ISRCIndex {
 	startTime := time.Now()
 	fileCount := 0
 
-	// Walk directory - only check .flac files
 	filepath.Walk(outputDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return nil
@@ -67,13 +65,11 @@ func buildISRCIndex(outputDir string) *ISRCIndex {
 			return nil
 		}
 
-		// Read ISRC from file
 		metadata, err := ReadMetadata(path)
 		if err != nil || metadata.ISRC == "" {
 			return nil
 		}
 
-		// Store in index (uppercase for case-insensitive matching)
 		idx.index[strings.ToUpper(metadata.ISRC)] = path
 		fileCount++
 		return nil
@@ -82,7 +78,6 @@ func buildISRCIndex(outputDir string) *ISRCIndex {
 	fmt.Printf("[ISRCIndex] Built index for %s: %d files in %v\n", 
 		outputDir, fileCount, time.Since(startTime).Round(time.Millisecond))
 
-	// Cache the index
 	isrcIndexCacheMu.Lock()
 	isrcIndexCache[outputDir] = idx
 	isrcIndexCacheMu.Unlock()
@@ -205,10 +200,8 @@ func CheckFilesExistParallel(outputDir string, tracksJSON string) (string, error
 
 	results := make([]FileExistenceResult, len(tracks))
 
-	// Build ISRC index from output directory (scan once)
 	isrcIdx := GetISRCIndex(outputDir)
 
-	// Check each track against the index (parallel)
 	var wg sync.WaitGroup
 	for i, track := range tracks {
 		wg.Add(1)

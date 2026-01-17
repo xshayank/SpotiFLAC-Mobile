@@ -48,7 +48,6 @@ class _EagerInitializationState extends ConsumerState<_EagerInitialization> {
       final extensionsDir = '${appDir.path}/extensions';
       final dataDir = '${appDir.path}/extension_data';
       
-      // Create directories if needed
       await Directory(extensionsDir).create(recursive: true);
       await Directory(dataDir).create(recursive: true);
       

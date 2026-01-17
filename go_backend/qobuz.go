@@ -855,7 +855,6 @@ func (q *QobuzDownloader) GetDownloadURL(trackID int64, quality string) (string,
 		return "", fmt.Errorf("no Qobuz API available")
 	}
 
-	// Use parallel approach - request from all APIs simultaneously
 	_, downloadURL, err := getQobuzDownloadURLParallel(apis, trackID, quality)
 	if err != nil {
 		return "", err
@@ -899,7 +898,6 @@ func (q *QobuzDownloader) DownloadFile(downloadURL, outputPath, itemID string) e
 	}
 
 	expectedSize := resp.ContentLength
-	// Set total bytes if available
 	if expectedSize > 0 && itemID != "" {
 		SetItemBytesTotal(itemID, expectedSize)
 	}
@@ -909,16 +907,13 @@ func (q *QobuzDownloader) DownloadFile(downloadURL, outputPath, itemID string) e
 		return err
 	}
 
-	// Use buffered writer for better performance (256KB buffer)
 	bufWriter := bufio.NewWriterSize(out, 256*1024)
 
-	// Use item progress writer with buffered output
 	var written int64
 	if itemID != "" {
 		progressWriter := NewItemProgressWriter(bufWriter, itemID)
 		written, err = io.Copy(progressWriter, resp.Body)
 	} else {
-		// Fallback: direct copy without progress tracking
 		written, err = io.Copy(bufWriter, resp.Body)
 	}
 
@@ -926,7 +921,6 @@ func (q *QobuzDownloader) DownloadFile(downloadURL, outputPath, itemID string) e
 	flushErr := bufWriter.Flush()
 	closeErr := out.Close()
 
-	// Check for any errors
 	if err != nil {
 		os.Remove(outputPath)
 		if isDownloadCancelled(itemID) {
@@ -970,18 +964,15 @@ type QobuzDownloadResult struct {
 func downloadFromQobuz(req DownloadRequest) (QobuzDownloadResult, error) {
 	downloader := NewQobuzDownloader()
 
-	// Check for existing file first
 	if existingFile, exists := checkISRCExistsInternal(req.OutputDir, req.ISRC); exists {
 		return QobuzDownloadResult{FilePath: "EXISTS:" + existingFile}, nil
 	}
 
-	// Convert expected duration from ms to seconds
 	expectedDurationSec := req.DurationMS / 1000
 
 	var track *QobuzTrack
 	var err error
 
-	// STRATEGY 0: Use pre-fetched Qobuz ID from Odesli enrichment (highest priority)
 	if req.QobuzID != "" {
 		GoLog("[Qobuz] Using Qobuz ID from Odesli enrichment: %s\n", req.QobuzID)
 		var trackID int64
@@ -1052,7 +1043,6 @@ func downloadFromQobuz(req DownloadRequest) (QobuzDownloadResult, error) {
 		GetTrackIDCache().SetQobuz(req.ISRC, track.ID)
 	}
 
-	// Build filename
 	filename := buildFilenameFromTemplate(req.FilenameFormat, map[string]interface{}{
 		"title":  req.TrackName,
 		"artist": req.ArtistName,
@@ -1064,7 +1054,6 @@ func downloadFromQobuz(req DownloadRequest) (QobuzDownloadResult, error) {
 	filename = sanitizeFilename(filename) + ".flac"
 	outputPath := filepath.Join(req.OutputDir, filename)
 
-	// Check if file already exists
 	if fileInfo, statErr := os.Stat(outputPath); statErr == nil && fileInfo.Size() > 0 {
 		return QobuzDownloadResult{FilePath: "EXISTS:" + outputPath}, nil
 	}
@@ -1083,12 +1072,10 @@ func downloadFromQobuz(req DownloadRequest) (QobuzDownloadResult, error) {
 	}
 	GoLog("[Qobuz] Using quality: %s (mapped from %s)\n", qobuzQuality, req.Quality)
 
-	// Get actual quality from track metadata
 	actualBitDepth := track.MaximumBitDepth
 	actualSampleRate := int(track.MaximumSamplingRate * 1000) // Convert kHz to Hz
 	GoLog("[Qobuz] Actual quality: %d-bit/%.1fkHz\n", actualBitDepth, track.MaximumSamplingRate)
 
-	// Get download URL using parallel API requests
 	downloadURL, err := downloader.GetDownloadURL(track.ID, qobuzQuality)
 	if err != nil {
 		return QobuzDownloadResult{}, fmt.Errorf("failed to get download URL: %w", err)
@@ -1120,16 +1107,11 @@ func downloadFromQobuz(req DownloadRequest) (QobuzDownloadResult, error) {
 	// Wait for parallel operations to complete
 	<-parallelDone
 
-	// Set progress to 100% and status to finalizing (before embedding)
-	// This makes the UI show "Finalizing..." while embedding happens
 	if req.ItemID != "" {
 		SetItemProgress(req.ItemID, 1.0, 0, 0)
 		SetItemFinalizing(req.ItemID)
 	}
 
-	// Embed metadata using parallel-fetched cover data
-	// Use metadata from the actual Qobuz track found (more accurate than request) but prefer
-	// requested Album Name to avoid ISRC version mismatches (e.g. Compilations vs Original)
 	albumName := track.Album.Title
 	if req.AlbumName != "" {
 		albumName = req.AlbumName
@@ -1147,7 +1129,6 @@ func downloadFromQobuz(req DownloadRequest) (QobuzDownloadResult, error) {
 		ISRC:        track.ISRC,
 	}
 
-	// Use cover data from parallel fetch
 	var coverData []byte
 	if parallelResult != nil && parallelResult.CoverData != nil {
 		coverData = parallelResult.CoverData

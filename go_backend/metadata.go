@@ -51,7 +51,6 @@ func EmbedMetadata(filePath string, metadata Metadata, coverPath string) error {
 		cmt = flacvorbis.New()
 	}
 
-	// Set metadata fields
 	setComment(cmt, "TITLE", metadata.Title)
 	setComment(cmt, "ARTIST", metadata.Artist)
 	setComment(cmt, "ALBUM", metadata.Album)
@@ -83,7 +82,6 @@ func EmbedMetadata(filePath string, metadata Metadata, coverPath string) error {
 		setComment(cmt, "UNSYNCEDLYRICS", metadata.Lyrics)
 	}
 
-	// Update or add vorbis comment block
 	cmtBlock := cmt.Marshal()
 	if cmtIdx >= 0 {
 		f.Meta[cmtIdx] = &cmtBlock
@@ -151,7 +149,6 @@ func EmbedMetadataWithCoverData(filePath string, metadata Metadata, coverData []
 		cmt = flacvorbis.New()
 	}
 
-	// Set metadata fields
 	setComment(cmt, "TITLE", metadata.Title)
 	setComment(cmt, "ARTIST", metadata.Artist)
 	setComment(cmt, "ALBUM", metadata.Album)
@@ -183,7 +180,6 @@ func EmbedMetadataWithCoverData(filePath string, metadata Metadata, coverData []
 		setComment(cmt, "UNSYNCEDLYRICS", metadata.Lyrics)
 	}
 
-	// Update or add vorbis comment block
 	cmtBlock := cmt.Marshal()
 	if cmtIdx >= 0 {
 		f.Meta[cmtIdx] = &cmtBlock
@@ -309,7 +305,6 @@ func getComment(cmt *flacvorbis.MetaDataBlockVorbisComment, key string) string {
 	return ""
 }
 
-// fileExists checks if a file exists
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
@@ -367,13 +362,11 @@ func ExtractLyrics(filePath string) (string, error) {
 				continue
 			}
 
-			// Try LYRICS tag first
 			lyrics, err := cmt.Get("LYRICS")
 			if err == nil && len(lyrics) > 0 && lyrics[0] != "" {
 				return lyrics[0], nil
 			}
 
-			// Fallback to UNSYNCEDLYRICS
 			lyrics, err = cmt.Get("UNSYNCEDLYRICS")
 			if err == nil && len(lyrics) > 0 && lyrics[0] != "" {
 				return lyrics[0], nil
@@ -406,10 +399,7 @@ func GetAudioQuality(filePath string) (AudioQuality, error) {
 		return AudioQuality{}, fmt.Errorf("failed to read marker: %w", err)
 	}
 
-	// Check if it's a FLAC file
 	if string(marker) == "fLaC" {
-		// Continue reading FLAC metadata
-		// Read metadata block header (4 bytes)
 		header := make([]byte, 4)
 		if _, err := file.Read(header); err != nil {
 			return AudioQuality{}, fmt.Errorf("failed to read header: %w", err)
@@ -420,7 +410,6 @@ func GetAudioQuality(filePath string) (AudioQuality, error) {
 			return AudioQuality{}, fmt.Errorf("first block is not STREAMINFO")
 		}
 
-		// Read STREAMINFO block (34 bytes minimum)
 		streamInfo := make([]byte, 34)
 		if _, err := file.Read(streamInfo); err != nil {
 			return AudioQuality{}, fmt.Errorf("failed to read STREAMINFO: %w", err)
@@ -468,7 +457,6 @@ func EmbedM4AMetadata(filePath string, metadata Metadata, coverData []byte) erro
 		return fmt.Errorf("failed to read M4A file: %w", err)
 	}
 
-	// Find moov atom position
 	moovPos := findAtom(data, "moov", 0)
 	if moovPos < 0 {
 		return fmt.Errorf("moov atom not found in M4A file")
@@ -481,7 +469,6 @@ func EmbedM4AMetadata(filePath string, metadata Metadata, coverData []byte) erro
 
 	var newData []byte
 	if udtaPos >= 0 && udtaPos < moovPos+moovSize {
-		// udta exists, find meta inside it or replace
 		udtaSize := int(uint32(data[udtaPos])<<24 | uint32(data[udtaPos+1])<<16 | uint32(data[udtaPos+2])<<8 | uint32(data[udtaPos+3]))
 		metaPos := findAtom(data, "meta", udtaPos+8)
 
@@ -522,7 +509,6 @@ func EmbedM4AMetadata(filePath string, metadata Metadata, coverData []byte) erro
 		newData = append(newData, data[insertPos:]...)
 	}
 
-	// Update moov size
 	newMoovSize := moovSize + len(newData) - len(data)
 	newData[moovPos] = byte(newMoovSize >> 24)
 	newData[moovPos+1] = byte(newMoovSize >> 16)
@@ -557,52 +543,42 @@ func findAtom(data []byte, name string, offset int) int {
 func buildMetaAtom(metadata Metadata, coverData []byte) []byte {
 	var ilst []byte
 
-	// ©nam - Title
 	if metadata.Title != "" {
 		ilst = append(ilst, buildTextAtom("©nam", metadata.Title)...)
 	}
 
-	// ©ART - Artist
 	if metadata.Artist != "" {
 		ilst = append(ilst, buildTextAtom("©ART", metadata.Artist)...)
 	}
 
-	// ©alb - Album
 	if metadata.Album != "" {
 		ilst = append(ilst, buildTextAtom("©alb", metadata.Album)...)
 	}
 
-	// aART - Album Artist
 	if metadata.AlbumArtist != "" {
 		ilst = append(ilst, buildTextAtom("aART", metadata.AlbumArtist)...)
 	}
 
-	// ©day - Year/Date
 	if metadata.Date != "" {
 		ilst = append(ilst, buildTextAtom("©day", metadata.Date)...)
 	}
 
-	// trkn - Track Number
 	if metadata.TrackNumber > 0 {
 		ilst = append(ilst, buildTrackNumberAtom(metadata.TrackNumber, metadata.TotalTracks)...)
 	}
 
-	// disk - Disc Number
 	if metadata.DiscNumber > 0 {
 		ilst = append(ilst, buildDiscNumberAtom(metadata.DiscNumber, 0)...)
 	}
 
-	// ©lyr - Lyrics
 	if metadata.Lyrics != "" {
 		ilst = append(ilst, buildTextAtom("©lyr", metadata.Lyrics)...)
 	}
 
-	// covr - Cover Art
 	if len(coverData) > 0 {
 		ilst = append(ilst, buildCoverAtom(coverData)...)
 	}
 
-	// Build ilst atom
 	ilstSize := 8 + len(ilst)
 	ilstAtom := make([]byte, 4)
 	ilstAtom[0] = byte(ilstSize >> 24)
@@ -624,7 +600,6 @@ func buildMetaAtom(metadata Metadata, coverData []byte) []byte {
 		0, // null terminator
 	}
 
-	// Build meta atom
 	metaContent := append([]byte{0, 0, 0, 0}, hdlr...) // version + flags + hdlr
 	metaContent = append(metaContent, ilstAtom...)
 
@@ -644,7 +619,6 @@ func buildMetaAtom(metadata Metadata, coverData []byte) []byte {
 func buildTextAtom(name, value string) []byte {
 	valueBytes := []byte(value)
 
-	// data atom
 	dataSize := 16 + len(valueBytes)
 	dataAtom := make([]byte, 4)
 	dataAtom[0] = byte(dataSize >> 24)
@@ -656,7 +630,6 @@ func buildTextAtom(name, value string) []byte {
 	dataAtom = append(dataAtom, 0, 0, 0, 0) // locale
 	dataAtom = append(dataAtom, valueBytes...)
 
-	// container atom
 	atomSize := 8 + len(dataAtom)
 	atom := make([]byte, 4)
 	atom[0] = byte(atomSize >> 24)
@@ -671,7 +644,6 @@ func buildTextAtom(name, value string) []byte {
 
 // buildTrackNumberAtom builds trkn atom
 func buildTrackNumberAtom(track, total int) []byte {
-	// data atom with track number
 	dataAtom := []byte{
 		0, 0, 0, 24, // size
 		'd', 'a', 't', 'a',
@@ -683,7 +655,6 @@ func buildTrackNumberAtom(track, total int) []byte {
 		0, 0, // padding
 	}
 
-	// trkn atom
 	atomSize := 8 + len(dataAtom)
 	atom := make([]byte, 4)
 	atom[0] = byte(atomSize >> 24)
@@ -698,7 +669,6 @@ func buildTrackNumberAtom(track, total int) []byte {
 
 // buildDiscNumberAtom builds disk atom
 func buildDiscNumberAtom(disc, total int) []byte {
-	// data atom with disc number
 	dataAtom := []byte{
 		0, 0, 0, 22, // size
 		'd', 'a', 't', 'a',
@@ -709,7 +679,6 @@ func buildDiscNumberAtom(disc, total int) []byte {
 		byte(total >> 8), byte(total), // total discs
 	}
 
-	// disk atom
 	atomSize := 8 + len(dataAtom)
 	atom := make([]byte, 4)
 	atom[0] = byte(atomSize >> 24)
@@ -724,13 +693,11 @@ func buildDiscNumberAtom(disc, total int) []byte {
 
 // buildCoverAtom builds covr atom with image data
 func buildCoverAtom(coverData []byte) []byte {
-	// Detect image type (JPEG = 13, PNG = 14)
 	imageType := byte(13) // default JPEG
 	if len(coverData) > 8 && coverData[0] == 0x89 && coverData[1] == 'P' && coverData[2] == 'N' && coverData[3] == 'G' {
 		imageType = 14 // PNG
 	}
 
-	// data atom
 	dataSize := 16 + len(coverData)
 	dataAtom := make([]byte, 4)
 	dataAtom[0] = byte(dataSize >> 24)
@@ -742,7 +709,6 @@ func buildCoverAtom(coverData []byte) []byte {
 	dataAtom = append(dataAtom, 0, 0, 0, 0)         // locale
 	dataAtom = append(dataAtom, coverData...)
 
-	// covr atom
 	atomSize := 8 + len(dataAtom)
 	atom := make([]byte, 4)
 	atom[0] = byte(atomSize >> 24)
@@ -762,7 +728,6 @@ func GetM4AQuality(filePath string) (AudioQuality, error) {
 		return AudioQuality{}, fmt.Errorf("failed to read M4A file: %w", err)
 	}
 
-	// Find moov -> trak -> mdia -> minf -> stbl -> stsd
 	moovPos := findAtom(data, "moov", 0)
 	if moovPos < 0 {
 		return AudioQuality{}, fmt.Errorf("moov atom not found")

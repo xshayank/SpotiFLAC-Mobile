@@ -89,7 +89,6 @@ func HasSpotifyCredentials() bool {
 		return true
 	}
 
-	// Check environment variables
 	if os.Getenv("SPOTIFY_CLIENT_ID") != "" && os.Getenv("SPOTIFY_CLIENT_SECRET") != "" {
 		return true
 	}
@@ -102,12 +101,10 @@ func getCredentials() (string, string, error) {
 	credentialsMu.RLock()
 	defer credentialsMu.RUnlock()
 
-	// Check custom credentials first
 	if customClientID != "" && customClientSecret != "" {
 		return customClientID, customClientSecret, nil
 	}
 
-	// Check environment variables
 	clientID := os.Getenv("SPOTIFY_CLIENT_ID")
 	clientSecret := os.Getenv("SPOTIFY_CLIENT_SECRET")
 
@@ -393,10 +390,8 @@ func (c *SpotifyMetadataClient) SearchTracks(ctx context.Context, query string, 
 
 // SearchAll searches for tracks and artists on Spotify
 func (c *SpotifyMetadataClient) SearchAll(ctx context.Context, query string, trackLimit, artistLimit int) (*SearchAllResult, error) {
-	// Create cache key
 	cacheKey := fmt.Sprintf("all:%s:%d:%d", query, trackLimit, artistLimit)
 
-	// Check cache first
 	c.cacheMu.RLock()
 	if entry, ok := c.searchCache[cacheKey]; ok && !entry.isExpired() {
 		c.cacheMu.RUnlock()
@@ -510,7 +505,6 @@ func (c *SpotifyMetadataClient) fetchTrack(ctx context.Context, trackID, token s
 }
 
 func (c *SpotifyMetadataClient) fetchAlbum(ctx context.Context, albumID, token string) (*AlbumResponsePayload, error) {
-	// Check cache first
 	c.cacheMu.RLock()
 	if entry, ok := c.albumCache[albumID]; ok && !entry.isExpired() {
 		c.cacheMu.RUnlock()
@@ -768,7 +762,6 @@ func (c *SpotifyMetadataClient) fetchPlaylist(ctx context.Context, playlistID, t
 }
 
 func (c *SpotifyMetadataClient) fetchArtist(ctx context.Context, artistID, token string) (*ArtistResponsePayload, error) {
-	// Check cache first
 	c.cacheMu.RLock()
 	if entry, ok := c.artistCache[artistID]; ok && !entry.isExpired() {
 		c.cacheMu.RUnlock()

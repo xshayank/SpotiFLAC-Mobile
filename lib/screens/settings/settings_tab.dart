@@ -123,16 +123,12 @@ class SettingsTab extends ConsumerWidget {
   }
 
   void _navigateTo(BuildContext context, Widget page) {
-    // Unfocus any focused widget before navigating to prevent keyboard from appearing on return
     FocusManager.instance.primaryFocus?.unfocus();
     
     Navigator.of(context).push(
-      // Use PageRouteBuilder for better predictive back gesture support
-      // MaterialPageRoute can cause freeze on some devices with gesture navigation
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => page,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          // Use slide transition similar to MaterialPageRoute
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;
           const curve = Curves.easeInOut;

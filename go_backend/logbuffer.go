@@ -73,12 +73,10 @@ func (lb *LogBuffer) Add(level, tag, message string) {
 	}
 
 	if len(lb.entries) >= lb.maxSize {
-		// Remove oldest entry
 		lb.entries = lb.entries[1:]
 	}
 	lb.entries = append(lb.entries, entry)
 
-	// Also print to logcat for debugging
 	fmt.Printf("[%s] %s\n", tag, message)
 }
 

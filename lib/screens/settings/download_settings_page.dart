@@ -473,7 +473,6 @@ class DownloadSettingsPage extends ConsumerWidget {
       // iOS: Show options dialog
       _showIOSDirectoryOptions(context, ref);
     } else {
-      // Android: Use file picker
       final result = await FilePicker.platform.getDirectoryPath();
       if (result != null) {
         ref.read(settingsProvider.notifier).setDownloadDirectory(result);
