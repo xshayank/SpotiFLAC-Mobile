@@ -797,6 +797,15 @@ func DownloadWithExtensionFallback(req DownloadRequest) (*DownloadResponse, erro
 					Service:          req.Source,
 				}
 
+				// Embed genre and label if provided (from Deezer metadata)
+				if req.Genre != "" || req.Label != "" {
+					if err := EmbedGenreLabel(result.FilePath, req.Genre, req.Label); err != nil {
+						GoLog("[DownloadWithExtensionFallback] Warning: failed to embed genre/label: %v\n", err)
+					} else {
+						GoLog("[DownloadWithExtensionFallback] Embedded genre=%q label=%q\n", req.Genre, req.Label)
+					}
+				}
+
 				// If extension has skipMetadataEnrichment, copy metadata
 				if ext.Manifest.SkipMetadataEnrichment {
 					resp.SkipMetadataEnrichment = true
@@ -935,6 +944,15 @@ func DownloadWithExtensionFallback(req DownloadRequest) (*DownloadResponse, erro
 					ActualBitDepth:   result.BitDepth,
 					ActualSampleRate: result.SampleRate,
 					Service:          providerID,
+				}
+
+				// Embed genre and label if provided (from Deezer metadata)
+				if req.Genre != "" || req.Label != "" {
+					if err := EmbedGenreLabel(result.FilePath, req.Genre, req.Label); err != nil {
+						GoLog("[DownloadWithExtensionFallback] Warning: failed to embed genre/label: %v\n", err)
+					} else {
+						GoLog("[DownloadWithExtensionFallback] Embedded genre=%q label=%q\n", req.Genre, req.Label)
+					}
 				}
 
 				// If extension has skipMetadataEnrichment and returned metadata, use it

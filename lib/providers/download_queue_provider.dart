@@ -1626,6 +1626,8 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
           itemId: item.id,
           durationMs: trackToDownload.duration,
           source: trackToDownload.source, // Pass extension ID that provided this track
+          genre: genre,
+          label: label,
         );
       } else if (state.autoFallback) {
         _log.d('Using auto-fallback mode');

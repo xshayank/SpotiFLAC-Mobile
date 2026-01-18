@@ -656,6 +656,8 @@ class PlatformBridge {
     String? itemId,
     int durationMs = 0,
     String? source, // Extension ID that provided this track (prioritize this extension)
+    String? genre,
+    String? label,
   }) async {
     _log.i('downloadWithExtensions: "$trackName" by $artistName${source != null ? ' (source: $source)' : ''}');
     final request = jsonEncode({
@@ -678,6 +680,8 @@ class PlatformBridge {
       'item_id': itemId ?? '',
       'duration_ms': durationMs,
       'source': source ?? '', // Extension ID that provided this track
+      'genre': genre ?? '',
+      'label': label ?? '',
     });
     
     final result = await _channel.invokeMethod('downloadWithExtensions', request);

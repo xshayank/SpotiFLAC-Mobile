@@ -1,14 +1,24 @@
 # Changelog
 
-## [3.1.2] - 2026-01-18
+## [3.1.2] - 2026-01-19
 
 ### Added
+
+- **Quick Search Provider Switcher**: Dropdown menu in search bar for instant provider switching
+  - Tap the search icon to reveal a dropdown menu with all available search providers
+  - Shows default provider (Deezer/Spotify based on metadata source setting) at the top
+  - Lists all enabled extensions with custom search capability
+  - Displays extension icons when available
+  - Checkmark indicates currently selected provider
+  - Search hint text updates immediately when switching providers
+  - Re-triggers search automatically if there's existing text in the search bar
+  - Eliminates need to navigate to Settings > Extensions > Search Provider
 
 - **Genre & Label Metadata**: Downloaded tracks now include genre and record label information
   - Fetches genre and label from Deezer album API for each track
   - Embeds GENRE, ORGANIZATION (label), and COPYRIGHT tags into FLAC files
   - Works automatically when Deezer track ID is available (via ISRC matching)
-  - Supports all download services (Tidal, Qobuz, Amazon)
+  - Supports all download services (Tidal, Qobuz, Amazon) and extension downloads
 
 - **MP3 Quality Option**: Optional MP3 download format with FLAC-to-MP3 conversion
   - New "Enable MP3 Option" toggle in Settings > Download > Audio Quality

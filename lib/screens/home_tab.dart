@@ -1411,7 +1411,19 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
           borderRadius: BorderRadius.circular(28),
           borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: _SearchProviderDropdown(
+          onProviderChanged: () {
+            // Reset search state when provider changes
+            _lastSearchQuery = null;
+            // Force rebuild to update hint text
+            setState(() {});
+            // Re-trigger search if there's text
+            final text = _urlController.text.trim();
+            if (text.isNotEmpty && text.length >= _minLiveSearchChars) {
+              _performSearch(text);
+            }
+          },
+        ),
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1462,6 +1474,185 @@ class _HomeTabState extends ConsumerState<HomeTab> with AutomaticKeepAliveClient
     _searchFocusNode.unfocus();
   }
 
+}
+
+/// Dropdown widget for quick search provider switching
+class _SearchProviderDropdown extends ConsumerWidget {
+  final VoidCallback? onProviderChanged;
+
+  const _SearchProviderDropdown({this.onProviderChanged});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final extState = ref.watch(extensionProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    // Get current provider info
+    final currentProvider = settings.searchProvider;
+    final searchProviders = extState.extensions
+        .where((ext) => ext.enabled && ext.hasCustomSearch)
+        .toList();
+    
+    // Find current provider extension
+    Extension? currentExt;
+    if (currentProvider != null && currentProvider.isNotEmpty) {
+      currentExt = searchProviders.where((e) => e.id == currentProvider).firstOrNull;
+    }
+    
+    // Determine display icon
+    IconData displayIcon = Icons.search;
+    String? iconPath;
+    if (currentExt != null) {
+      iconPath = currentExt.iconPath;
+      if (currentExt.searchBehavior?.icon != null) {
+        // Use search behavior icon if available
+        displayIcon = _getIconFromName(currentExt.searchBehavior!.icon!);
+      }
+    }
+    
+    // Don't show dropdown if no custom search providers available
+    if (searchProviders.isEmpty) {
+      return const Icon(Icons.search);
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: PopupMenuButton<String>(
+        icon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (iconPath != null && iconPath.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.file(
+                  File(iconPath),
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, e, st) => Icon(displayIcon, size: 20),
+                ),
+              )
+            else
+              Icon(displayIcon, size: 20),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+        tooltip: 'Change search provider',
+        offset: const Offset(0, 40),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onSelected: (String providerId) {
+        // Empty string means default (Deezer/Spotify)
+        final provider = providerId.isEmpty ? null : providerId;
+        ref.read(settingsProvider.notifier).setSearchProvider(provider);
+        onProviderChanged?.call();
+      },
+      itemBuilder: (context) => [
+        // Default option (Deezer/Spotify based on metadata source)
+        PopupMenuItem<String>(
+          value: '', // Empty string = default provider
+          child: Row(
+            children: [
+              Icon(
+                Icons.music_note,
+                size: 20,
+                color: currentProvider == null || currentProvider.isEmpty
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  settings.metadataSource == 'spotify' ? 'Spotify' : 'Deezer',
+                  style: TextStyle(
+                    fontWeight: currentProvider == null || currentProvider.isEmpty
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              ),
+              if (currentProvider == null || currentProvider.isEmpty)
+                Icon(Icons.check, size: 18, color: colorScheme.primary),
+            ],
+          ),
+        ),
+        if (searchProviders.isNotEmpty) const PopupMenuDivider(),
+        // Extension providers
+        ...searchProviders.map((ext) => PopupMenuItem<String>(
+          value: ext.id,
+          child: Row(
+            children: [
+              if (ext.iconPath != null && ext.iconPath!.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.file(
+                    File(ext.iconPath!),
+                    width: 20,
+                    height: 20,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, e, st) => Icon(
+                      _getIconFromName(ext.searchBehavior?.icon),
+                      size: 20,
+                      color: currentProvider == ext.id
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  _getIconFromName(ext.searchBehavior?.icon),
+                  size: 20,
+                  color: currentProvider == ext.id
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  ext.displayName,
+                  style: TextStyle(
+                    fontWeight: currentProvider == ext.id
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              ),
+              if (currentProvider == ext.id)
+                Icon(Icons.check, size: 18, color: colorScheme.primary),
+            ],
+          ),
+        )),
+      ],
+      ),
+    );
+  }
+  
+  IconData _getIconFromName(String? iconName) {
+    switch (iconName) {
+      case 'video':
+      case 'movie':
+        return Icons.video_library;
+      case 'music':
+        return Icons.music_note;
+      case 'podcast':
+        return Icons.podcasts;
+      case 'book':
+      case 'audiobook':
+        return Icons.menu_book;
+      case 'cloud':
+        return Icons.cloud;
+      case 'download':
+        return Icons.download;
+      default:
+        return Icons.search;
+    }
+  }
 }
 
 /// Separate Consumer widget for each track item - only rebuilds when this specific track's status changes

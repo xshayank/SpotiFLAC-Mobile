@@ -375,6 +375,53 @@ func EmbedLyrics(filePath string, lyrics string) error {
 	return f.Save(filePath)
 }
 
+// EmbedGenreLabel embeds genre and label into a FLAC file as a separate operation
+// This is used for extension downloads where the file is already downloaded
+func EmbedGenreLabel(filePath string, genre, label string) error {
+	if genre == "" && label == "" {
+		return nil // Nothing to embed
+	}
+
+	f, err := flac.ParseFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to parse FLAC file: %w", err)
+	}
+
+	var cmtIdx int = -1
+	var cmt *flacvorbis.MetaDataBlockVorbisComment
+
+	for idx, meta := range f.Meta {
+		if meta.Type == flac.VorbisComment {
+			cmtIdx = idx
+			cmt, err = flacvorbis.ParseFromMetaDataBlock(*meta)
+			if err != nil {
+				return fmt.Errorf("failed to parse vorbis comment: %w", err)
+			}
+			break
+		}
+	}
+
+	if cmt == nil {
+		cmt = flacvorbis.New()
+	}
+
+	if genre != "" {
+		setComment(cmt, "GENRE", genre)
+	}
+	if label != "" {
+		setComment(cmt, "ORGANIZATION", label)
+	}
+
+	cmtBlock := cmt.Marshal()
+	if cmtIdx >= 0 {
+		f.Meta[cmtIdx] = &cmtBlock
+	} else {
+		f.Meta = append(f.Meta, &cmtBlock)
+	}
+
+	return f.Save(filePath)
+}
+
 // ExtractLyrics extracts embedded lyrics from a FLAC file
 func ExtractLyrics(filePath string) (string, error) {
 	f, err := flac.ParseFile(filePath)
