@@ -1742,7 +1742,9 @@ class _CollectionItemWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        item.artistName.isNotEmpty ? item.artistName : (isPlaylist ? 'Playlist' : 'Album'),
+                        item.artistName.isNotEmpty 
+                            ? item.artistName 
+                            : (isPlaylist ? 'Playlist' : (isArtist ? 'Artist' : 'Album')),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
