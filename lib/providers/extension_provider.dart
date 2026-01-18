@@ -355,11 +355,12 @@ class QualitySpecificSetting {
 class ExtensionSetting {
   final String key;
   final String label;
-  final String type; // 'string', 'number', 'boolean', 'select'
+  final String type; // 'string', 'number', 'boolean', 'select', 'button'
   final dynamic defaultValue;
   final String? description;
   final List<String>? options; // For select type
   final bool required;
+  final String? action; // For button type: JS function name to call
 
   const ExtensionSetting({
     required this.key,
@@ -369,6 +370,7 @@ class ExtensionSetting {
     this.description,
     this.options,
     this.required = false,
+    this.action,
   });
 
   factory ExtensionSetting.fromJson(Map<String, dynamic> json) {
@@ -380,6 +382,7 @@ class ExtensionSetting {
       description: json['description'] as String?,
       options: (json['options'] as List<dynamic>?)?.cast<String>(),
       required: json['required'] as bool? ?? false,
+      action: json['action'] as String?,
     );
   }
 }

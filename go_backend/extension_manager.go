@@ -959,3 +959,60 @@ func (m *ExtensionManager) UnloadAllExtensions() {
 
 	GoLog("[Extension] All extensions unloaded\n")
 }
+
+// InvokeAction calls a custom action function on an extension (e.g., for button settings)
+// The function is called as extension.<actionName>() and can return a result
+func (m *ExtensionManager) InvokeAction(extensionID string, actionName string) (map[string]interface{}, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	ext, exists := m.extensions[extensionID]
+	if !exists {
+		return nil, fmt.Errorf("extension not found: %s", extensionID)
+	}
+
+	if ext.VM == nil {
+		return nil, fmt.Errorf("extension VM not initialized")
+	}
+
+	if !ext.Enabled {
+		return nil, fmt.Errorf("extension is disabled")
+	}
+
+	// Call the action function on the extension object
+	script := fmt.Sprintf(`
+		(function() {
+			if (typeof extension !== 'undefined' && typeof extension.%s === 'function') {
+				try {
+					var result = extension.%s();
+					if (result && typeof result.then === 'function') {
+						// Handle promise - return pending status
+						return { success: true, pending: true, message: 'Action started' };
+					}
+					return { success: true, result: result };
+				} catch (e) {
+					return { success: false, error: e.toString() };
+				}
+			}
+			return { success: false, error: 'Action function not found: %s' };
+		})()
+	`, actionName, actionName, actionName)
+
+	result, err := RunWithTimeoutAndRecover(ext.VM, script, DefaultJSTimeout)
+	if err != nil {
+		GoLog("[Extension] InvokeAction error for %s.%s: %v\n", extensionID, actionName, err)
+		return nil, fmt.Errorf("action failed: %v", err)
+	}
+
+	if result == nil || goja.IsUndefined(result) {
+		return map[string]interface{}{"success": true}, nil
+	}
+
+	exported := result.Export()
+	if resultMap, ok := exported.(map[string]interface{}); ok {
+		GoLog("[Extension] InvokeAction %s.%s result: %v\n", extensionID, actionName, resultMap)
+		return resultMap, nil
+	}
+
+	return map[string]interface{}{"success": true, "result": exported}, nil
+}

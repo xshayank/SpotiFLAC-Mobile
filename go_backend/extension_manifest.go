@@ -23,6 +23,7 @@ const (
 	SettingTypeNumber SettingType = "number"
 	SettingTypeBool   SettingType = "boolean"
 	SettingTypeSelect SettingType = "select"
+	SettingTypeButton SettingType = "button" // Action button that calls a JS function
 )
 
 // ExtensionPermissions defines what resources an extension can access
@@ -42,6 +43,7 @@ type ExtensionSetting struct {
 	Secret      bool        `json:"secret,omitempty"`
 	Default     interface{} `json:"default,omitempty"`
 	Options     []string    `json:"options,omitempty"` // For select type
+	Action      string      `json:"action,omitempty"`  // For button type: JS function name to call (e.g., "startLogin")
 }
 
 // QualityOption represents a quality option for download providers
@@ -204,6 +206,7 @@ func (m *ExtensionManifest) Validate() error {
 			SettingTypeNumber: true,
 			SettingTypeBool:   true,
 			SettingTypeSelect: true,
+			SettingTypeButton: true,
 		}
 		if !validTypes[setting.Type] {
 			return &ManifestValidationError{
@@ -217,6 +220,14 @@ func (m *ExtensionManifest) Validate() error {
 			return &ManifestValidationError{
 				Field:   fmt.Sprintf("settings[%d].options", i),
 				Message: "select type requires options",
+			}
+		}
+
+		// Button type requires action
+		if setting.Type == SettingTypeButton && setting.Action == "" {
+			return &ManifestValidationError{
+				Field:   fmt.Sprintf("settings[%d].action", i),
+				Message: "button type requires action (JS function name)",
 			}
 		}
 	}
