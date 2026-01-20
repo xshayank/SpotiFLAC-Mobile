@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"golang.org/x/net/proxy"
@@ -26,10 +27,16 @@ type ProxyConfig struct {
 	Password string
 }
 
-var currentProxyConfig *ProxyConfig
+var (
+	currentProxyConfig *ProxyConfig
+	proxyConfigMutex   sync.RWMutex
+)
 
 // SetProxyConfiguration sets the global proxy configuration
 func SetProxyConfiguration(proxyType, host string, port int, username, password string) {
+	proxyConfigMutex.Lock()
+	defer proxyConfigMutex.Unlock()
+	
 	currentProxyConfig = &ProxyConfig{
 		Enabled:  true,
 		Type:     strings.ToLower(proxyType),
@@ -45,30 +52,48 @@ func SetProxyConfiguration(proxyType, host string, port int, username, password 
 
 // ClearProxyConfiguration clears the proxy configuration
 func ClearProxyConfiguration() {
+	proxyConfigMutex.Lock()
+	defer proxyConfigMutex.Unlock()
+	
 	currentProxyConfig = nil
 	GoLog("[Proxy] Proxy configuration cleared\n")
 	// Reinitialize transport without proxy
 	initializeTransport()
 }
 
+// getProxyConfig safely returns a copy of the current proxy config
+func getProxyConfig() *ProxyConfig {
+	proxyConfigMutex.RLock()
+	defer proxyConfigMutex.RUnlock()
+	
+	if currentProxyConfig == nil {
+		return nil
+	}
+	
+	// Return a copy to avoid race conditions
+	configCopy := *currentProxyConfig
+	return &configCopy
+}
+
 // createProxyDialer creates a dialer based on the current proxy config
 func createProxyDialer() (proxy.Dialer, error) {
-	if currentProxyConfig == nil || !currentProxyConfig.Enabled {
+	config := getProxyConfig()
+	if config == nil || !config.Enabled {
 		return &net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}, nil
 	}
 
-	proxyAddr := fmt.Sprintf("%s:%d", currentProxyConfig.Host, currentProxyConfig.Port)
+	proxyAddr := fmt.Sprintf("%s:%d", config.Host, config.Port)
 
-	switch currentProxyConfig.Type {
+	switch config.Type {
 	case "socks5":
 		var auth *proxy.Auth
-		if currentProxyConfig.Username != "" {
+		if config.Username != "" {
 			auth = &proxy.Auth{
-				User:     currentProxyConfig.Username,
-				Password: currentProxyConfig.Password,
+				User:     config.Username,
+				Password: config.Password,
 			}
 		}
 		return proxy.SOCKS5("tcp", proxyAddr, auth, proxy.Direct)
@@ -79,24 +104,25 @@ func createProxyDialer() (proxy.Dialer, error) {
 			KeepAlive: 30 * time.Second,
 		}, nil
 	default:
-		return nil, fmt.Errorf("unsupported proxy type: %s", currentProxyConfig.Type)
+		return nil, fmt.Errorf("unsupported proxy type: %s", config.Type)
 	}
 }
 
 // createProxyFunc creates a proxy function for HTTP transport
 func createProxyFunc() func(*http.Request) (*url.URL, error) {
-	if currentProxyConfig == nil || !currentProxyConfig.Enabled {
+	config := getProxyConfig()
+	if config == nil || !config.Enabled {
 		return nil
 	}
 
-	if currentProxyConfig.Type == "http" || currentProxyConfig.Type == "https" {
+	if config.Type == "http" || config.Type == "https" {
 		return func(req *http.Request) (*url.URL, error) {
 			proxyURL := &url.URL{
-				Scheme: currentProxyConfig.Type,
-				Host:   fmt.Sprintf("%s:%d", currentProxyConfig.Host, currentProxyConfig.Port),
+				Scheme: config.Type,
+				Host:   fmt.Sprintf("%s:%d", config.Host, config.Port),
 			}
-			if currentProxyConfig.Username != "" {
-				proxyURL.User = url.UserPassword(currentProxyConfig.Username, currentProxyConfig.Password)
+			if config.Username != "" {
+				proxyURL.User = url.UserPassword(config.Username, config.Password)
 			}
 			return proxyURL, nil
 		}

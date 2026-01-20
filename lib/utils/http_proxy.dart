@@ -1,5 +1,8 @@
 import 'dart:io';
 import 'package:spotiflac_android/models/settings.dart';
+import 'package:spotiflac_android/utils/logger.dart';
+
+final _log = AppLogger('HttpProxy');
 
 /// Configures an HttpClient with proxy settings from AppSettings
 /// 
@@ -32,11 +35,13 @@ HttpClient configureHttpClientProxy(HttpClient client, AppSettings settings) {
       client.findProxy = (uri) {
         return 'PROXY $proxyUrl';
       };
+      
+      _log.d('Configured HttpClient with proxy: $proxyType://$proxyHost:$proxyPort');
     } else if (proxyType == 'socks5') {
       // SOCKS5 is not supported by Dart's HttpClient
       // The Go backend will handle SOCKS5 proxy for API requests
       // For cover downloads, we'll fallback to direct connection
-      print('Warning: SOCKS5 proxy not supported for HttpClient (cover downloads). Go backend will use proxy for API requests.');
+      _log.w('SOCKS5 proxy not supported for HttpClient (cover downloads). Go backend will use proxy for API requests.');
     }
   }
   

@@ -14,15 +14,28 @@ class _ProxySettingsPageState extends ConsumerState<ProxySettingsPage> {
   late TextEditingController _portController;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    final settings = ref.read(settingsProvider);
-    _hostController = TextEditingController(text: settings.proxyHost);
-    _portController = TextEditingController(text: settings.proxyPort.toString());
-    _usernameController = TextEditingController(text: settings.proxyUsername);
-    _passwordController = TextEditingController(text: settings.proxyPassword);
+    _hostController = TextEditingController();
+    _portController = TextEditingController();
+    _usernameController = TextEditingController();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final settings = ref.read(settingsProvider);
+      _hostController.text = settings.proxyHost;
+      _portController.text = settings.proxyPort.toString();
+      _usernameController.text = settings.proxyUsername;
+      _passwordController.text = settings.proxyPassword;
+      _initialized = true;
+    }
   }
 
   @override
