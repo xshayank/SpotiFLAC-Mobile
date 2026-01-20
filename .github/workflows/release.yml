@@ -109,7 +109,7 @@ jobs:
         working-directory: go_backend
         run: |
           mkdir -p ../android/app/libs
-          gomobile bind -target=android -androidapi 24 -o ../android/app/libs/gobackend.aar .
+          gomobile bind -target=android -androidapi 24 -o ../android/app/libs/gobackend.aar ./gobackend
         env:
           CGO_ENABLED: 1
 
@@ -194,7 +194,7 @@ jobs:
         working-directory: go_backend
         run: |
           mkdir -p ../ios/Frameworks
-          gomobile bind -target=ios -o ../ios/Frameworks/Gobackend.xcframework .
+          gomobile bind -target=ios -o ../ios/Frameworks/Gobackend.xcframework ./gobackend
         env:
           CGO_ENABLED: 1
 

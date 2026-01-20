@@ -58,7 +58,7 @@ cd go_backend
 
 # Build for Android (creates AAR library)
 mkdir -p ../android/app/libs
-gomobile bind -target=android -androidapi 24 -o ../android/app/libs/gobackend.aar .
+gomobile bind -target=android -androidapi 24 -o ../android/app/libs/gobackend.aar ./gobackend
 
 cd ..
 ```

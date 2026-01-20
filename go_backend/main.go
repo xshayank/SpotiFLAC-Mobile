@@ -1,6 +1,7 @@
 package main
 
 import "C"
+import _ "github.com/zarz/spotiflac_android/go_backend/gobackend"
 
 // main is required for buildmode=c-shared
 func main() {}
