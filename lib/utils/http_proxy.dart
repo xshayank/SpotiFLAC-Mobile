@@ -23,20 +23,28 @@ HttpClient configureHttpClientProxy(HttpClient client, AppSettings settings) {
     
     // HttpClient in Dart only supports HTTP/HTTPS proxies, not SOCKS5
     if (proxyType == 'http' || proxyType == 'https') {
-      String proxyUrl = '$proxyType://$proxyHost:$proxyPort';
+      // Build proxy URL for authentication
+      String proxyAddress = '$proxyHost:$proxyPort';
+      String? proxyAuth;
       
       // Add authentication if provided
       if (settings.proxyUsername.isNotEmpty) {
         final username = Uri.encodeComponent(settings.proxyUsername);
         final password = Uri.encodeComponent(settings.proxyPassword);
-        proxyUrl = '$proxyType://$username:$password@$proxyHost:$proxyPort';
+        proxyAuth = '$username:$password';
       }
       
+      // For Dart's findProxy, format is 'PROXY host:port' without scheme
       client.findProxy = (uri) {
-        return 'PROXY $proxyUrl';
+        if (proxyAuth != null) {
+          // Note: Dart's HttpClient doesn't support auth in findProxy
+          // Authentication needs to be handled at the proxy level
+          _log.w('Proxy authentication may not work with HttpClient. Use authenticated proxy or Go backend for full auth support.');
+        }
+        return 'PROXY $proxyAddress';
       };
       
-      _log.d('Configured HttpClient with proxy: $proxyType://$proxyHost:$proxyPort');
+      _log.d('Configured HttpClient with proxy: $proxyAddress');
     } else if (proxyType == 'socks5') {
       // SOCKS5 is not supported by Dart's HttpClient
       // The Go backend will handle SOCKS5 proxy for API requests

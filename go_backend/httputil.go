@@ -45,7 +45,8 @@ func SetProxyConfiguration(proxyType, host string, port int, username, password 
 		Username: username,
 		Password: password,
 	}
-	GoLog("[Proxy] Configured %s proxy: %s:%d\n", proxyType, host, port)
+	// Redact sensitive information in logs
+	GoLog("[Proxy] Configured %s proxy (host and port redacted for security)\n", proxyType)
 	// Reinitialize transport with new proxy settings
 	initializeTransport()
 }
