@@ -33,6 +33,12 @@ class AppSettings {
   final String locale;
   final bool enableMp3Option;
   final String lyricsMode;
+  final bool useProxy;
+  final String proxyType;
+  final String proxyHost;
+  final int proxyPort;
+  final String proxyUsername;
+  final String proxyPassword;
 
   const AppSettings({
     this.defaultService = 'tidal',
@@ -64,6 +70,12 @@ class AppSettings {
     this.locale = 'system',
     this.enableMp3Option = false,
     this.lyricsMode = 'embed',
+    this.useProxy = false,
+    this.proxyType = 'http',
+    this.proxyHost = '',
+    this.proxyPort = 8080,
+    this.proxyUsername = '',
+    this.proxyPassword = '',
   });
 
   AppSettings copyWith({
@@ -97,6 +109,12 @@ class AppSettings {
     String? locale,
     bool? enableMp3Option,
     String? lyricsMode,
+    bool? useProxy,
+    String? proxyType,
+    String? proxyHost,
+    int? proxyPort,
+    String? proxyUsername,
+    String? proxyPassword,
   }) {
     return AppSettings(
       defaultService: defaultService ?? this.defaultService,
@@ -128,6 +146,12 @@ class AppSettings {
       locale: locale ?? this.locale,
       enableMp3Option: enableMp3Option ?? this.enableMp3Option,
       lyricsMode: lyricsMode ?? this.lyricsMode,
+      useProxy: useProxy ?? this.useProxy,
+      proxyType: proxyType ?? this.proxyType,
+      proxyHost: proxyHost ?? this.proxyHost,
+      proxyPort: proxyPort ?? this.proxyPort,
+      proxyUsername: proxyUsername ?? this.proxyUsername,
+      proxyPassword: proxyPassword ?? this.proxyPassword,
     );
   }
 

@@ -38,6 +38,12 @@ AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => AppSettings(
   locale: json['locale'] as String? ?? 'system',
   enableMp3Option: json['enableMp3Option'] as bool? ?? false,
   lyricsMode: json['lyricsMode'] as String? ?? 'embed',
+  useProxy: json['useProxy'] as bool? ?? false,
+  proxyType: json['proxyType'] as String? ?? 'http',
+  proxyHost: json['proxyHost'] as String? ?? '',
+  proxyPort: (json['proxyPort'] as num?)?.toInt() ?? 8080,
+  proxyUsername: json['proxyUsername'] as String? ?? '',
+  proxyPassword: json['proxyPassword'] as String? ?? '',
 );
 
 Map<String, dynamic> _$AppSettingsToJson(AppSettings instance) =>
@@ -71,4 +77,10 @@ Map<String, dynamic> _$AppSettingsToJson(AppSettings instance) =>
       'locale': instance.locale,
       'enableMp3Option': instance.enableMp3Option,
       'lyricsMode': instance.lyricsMode,
+      'useProxy': instance.useProxy,
+      'proxyType': instance.proxyType,
+      'proxyHost': instance.proxyHost,
+      'proxyPort': instance.proxyPort,
+      'proxyUsername': instance.proxyUsername,
+      'proxyPassword': instance.proxyPassword,
     };

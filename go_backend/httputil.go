@@ -13,7 +13,135 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"golang.org/x/net/proxy"
 )
+
+// ProxyConfig holds the current proxy configuration
+type ProxyConfig struct {
+	Enabled  bool
+	Type     string // "http", "https", "socks5"
+	Host     string
+	Port     int
+	Username string
+	Password string
+}
+
+var currentProxyConfig *ProxyConfig
+
+// SetProxyConfiguration sets the global proxy configuration
+func SetProxyConfiguration(proxyType, host string, port int, username, password string) {
+	currentProxyConfig = &ProxyConfig{
+		Enabled:  true,
+		Type:     strings.ToLower(proxyType),
+		Host:     host,
+		Port:     port,
+		Username: username,
+		Password: password,
+	}
+	GoLog("[Proxy] Configured %s proxy: %s:%d\n", proxyType, host, port)
+	// Reinitialize transport with new proxy settings
+	initializeTransport()
+}
+
+// ClearProxyConfiguration clears the proxy configuration
+func ClearProxyConfiguration() {
+	currentProxyConfig = nil
+	GoLog("[Proxy] Proxy configuration cleared\n")
+	// Reinitialize transport without proxy
+	initializeTransport()
+}
+
+// createProxyDialer creates a dialer based on the current proxy config
+func createProxyDialer() (proxy.Dialer, error) {
+	if currentProxyConfig == nil || !currentProxyConfig.Enabled {
+		return &net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}, nil
+	}
+
+	proxyAddr := fmt.Sprintf("%s:%d", currentProxyConfig.Host, currentProxyConfig.Port)
+
+	switch currentProxyConfig.Type {
+	case "socks5":
+		var auth *proxy.Auth
+		if currentProxyConfig.Username != "" {
+			auth = &proxy.Auth{
+				User:     currentProxyConfig.Username,
+				Password: currentProxyConfig.Password,
+			}
+		}
+		return proxy.SOCKS5("tcp", proxyAddr, auth, proxy.Direct)
+	case "http", "https":
+		// For HTTP/HTTPS proxies, we'll use the transport's Proxy field
+		return &net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported proxy type: %s", currentProxyConfig.Type)
+	}
+}
+
+// createProxyFunc creates a proxy function for HTTP transport
+func createProxyFunc() func(*http.Request) (*url.URL, error) {
+	if currentProxyConfig == nil || !currentProxyConfig.Enabled {
+		return nil
+	}
+
+	if currentProxyConfig.Type == "http" || currentProxyConfig.Type == "https" {
+		return func(req *http.Request) (*url.URL, error) {
+			proxyURL := &url.URL{
+				Scheme: currentProxyConfig.Type,
+				Host:   fmt.Sprintf("%s:%d", currentProxyConfig.Host, currentProxyConfig.Port),
+			}
+			if currentProxyConfig.Username != "" {
+				proxyURL.User = url.UserPassword(currentProxyConfig.Username, currentProxyConfig.Password)
+			}
+			return proxyURL, nil
+		}
+	}
+
+	return nil
+}
+
+// initializeTransport initializes the shared transport with proxy settings
+func initializeTransport() {
+	dialer, err := createProxyDialer()
+	if err != nil {
+		GoLog("[Proxy] Error creating proxy dialer: %v\n", err)
+		dialer = &net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}
+	}
+
+	sharedTransport = &http.Transport{
+		DialContext: dialer.DialContext,
+		Proxy:       createProxyFunc(),
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		MaxConnsPerHost:       20,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		DisableKeepAlives:     false,
+		ForceAttemptHTTP2:     true,
+		WriteBufferSize:       64 * 1024,
+		ReadBufferSize:        64 * 1024,
+		DisableCompression:    true,
+	}
+
+	sharedClient = &http.Client{
+		Transport: sharedTransport,
+		Timeout:   DefaultTimeout,
+	}
+
+	downloadClient = &http.Client{
+		Transport: sharedTransport,
+		Timeout:   DownloadTimeout,
+	}
+}
 
 // getRandomUserAgent generates a random Windows Chrome User-Agent string
 // Uses modern Chrome format with build and patch numbers

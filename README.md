@@ -10,6 +10,7 @@ Download music in true lossless FLAC from Tidal, Qobuz & Amazon Music — no acc
 
 ![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![iOS](https://img.shields.io/badge/iOS-14.0%2B-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Windows](https://img.shields.io/badge/Windows-10%2B-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 
 <p align="center">
   <a href="https://t.me/spotiflac">
@@ -24,6 +25,17 @@ Download music in true lossless FLAC from Tidal, Qobuz & Amazon Music — no acc
 </div>
 
 ### [Download](https://github.com/zarzet/SpotiFLAC-Mobile/releases)
+
+## Features
+
+- ✨ Download lossless FLAC audio from Tidal, Qobuz & Amazon Music
+- 🎵 Support for tracks, albums, and playlists
+- 🔌 Extensible architecture with custom providers
+- 🌐 **Proxy support (HTTP/HTTPS/SOCKS5)** - Bypass network restrictions
+- 🖥️ **Windows desktop support** - Now available for PC use
+- 📱 Mobile-first design that works great on desktop
+- 🎨 Material Design 3 with dynamic colors
+- 🌍 Multi-language support
 
 ## Screenshots
 
@@ -83,6 +95,15 @@ A: The mobile app includes FFmpeg libraries for audio processing and format conv
 
 **Q: Is this app safe?**  
 A: Yes, the app is open source and you can verify the code yourself. Each release is scanned with VirusTotal (see badge at top of README).
+
+**Q: How do I use proxy support?**  
+A: Go to Settings > Network (or Advanced), enable "Use Proxy", and configure your proxy server (HTTP, HTTPS, or SOCKS5). This is useful if your ISP blocks certain services or you need to route traffic through a proxy.
+
+**Q: Does the Windows version work the same as mobile?**  
+A: Yes! The Windows version is built from the same codebase and has all the same features. See [BUILDING.md](BUILDING.md) for instructions on building the Windows version.
+
+**Q: How do I build the Windows version?**  
+A: Follow the instructions in [BUILDING.md](BUILDING.md). You'll need Flutter SDK, Go, and Visual Studio with C++ tools. Run `scripts/build_windows.bat` on Windows or see the manual build steps in the documentation.
 
 ## Disclaimer
 

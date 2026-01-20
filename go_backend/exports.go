@@ -2082,3 +2082,28 @@ func ClearStoreCacheJSON() error {
 	store.ClearCache()
 	return nil
 }
+
+// ==================== PROXY CONFIGURATION ====================
+
+// SetProxyConfigJSON sets the proxy configuration
+func SetProxyConfigJSON(proxyType, host string, port int, username, password string) error {
+	if host == "" {
+		return fmt.Errorf("proxy host cannot be empty")
+	}
+	if port <= 0 || port > 65535 {
+		return fmt.Errorf("invalid proxy port: %d", port)
+	}
+	
+	validTypes := map[string]bool{"http": true, "https": true, "socks5": true}
+	if !validTypes[strings.ToLower(proxyType)] {
+		return fmt.Errorf("invalid proxy type: %s (supported: http, https, socks5)", proxyType)
+	}
+
+	SetProxyConfiguration(proxyType, host, port, username, password)
+	return nil
+}
+
+// ClearProxyConfigJSON clears the proxy configuration
+func ClearProxyConfigJSON() {
+	ClearProxyConfiguration()
+}
