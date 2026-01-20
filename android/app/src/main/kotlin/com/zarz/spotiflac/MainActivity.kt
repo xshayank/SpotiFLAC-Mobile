@@ -678,6 +678,23 @@ class MainActivity: FlutterActivity() {
                             }
                             result.success(null)
                         }
+                        "setProxyConfig" -> {
+                            val proxyType = call.argument<String>("proxy_type") ?: "http"
+                            val host = call.argument<String>("host") ?: ""
+                            val port = call.argument<Int>("port") ?: 8080
+                            val username = call.argument<String>("username") ?: ""
+                            val password = call.argument<String>("password") ?: ""
+                            withContext(Dispatchers.IO) {
+                                Gobackend.setProxyConfigJSON(proxyType, host, port.toLong(), username, password)
+                            }
+                            result.success(null)
+                        }
+                        "clearProxyConfig" -> {
+                            withContext(Dispatchers.IO) {
+                                Gobackend.clearProxyConfigJSON()
+                            }
+                            result.success(null)
+                        }
                         else -> result.notImplemented()
                     }
                 } catch (e: Exception) {

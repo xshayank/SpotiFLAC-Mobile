@@ -14,6 +14,7 @@ import 'package:spotiflac_android/services/platform_bridge.dart';
 import 'package:spotiflac_android/services/ffmpeg_service.dart';
 import 'package:spotiflac_android/services/notification_service.dart';
 import 'package:spotiflac_android/utils/logger.dart';
+import 'package:spotiflac_android/utils/http_proxy.dart';
 
 final _log = AppLogger('DownloadQueue');
 final _historyLog = AppLogger('DownloadHistory');
@@ -1107,6 +1108,8 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
         coverPath = '${tempDir.path}/cover_$uniqueId.jpg';
 
         final httpClient = HttpClient();
+        final settings = ref.read(settingsProvider);
+        configureHttpClientProxy(httpClient, settings);
         final request = await httpClient.getUrl(Uri.parse(coverUrl));
         final response = await request.close();
         if (response.statusCode == 200) {
@@ -1246,6 +1249,8 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
         coverPath = '${tempDir.path}/cover_mp3_$uniqueId.jpg';
 
         final httpClient = HttpClient();
+        final settings = ref.read(settingsProvider);
+        configureHttpClientProxy(httpClient, settings);
         final request = await httpClient.getUrl(Uri.parse(coverUrl));
         final response = await request.close();
         if (response.statusCode == 200) {
