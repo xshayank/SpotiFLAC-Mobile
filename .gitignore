@@ -56,6 +56,18 @@ ios/Flutter/Flutter.framework/
 ios/Flutter/Flutter.podspec
 android/app/libs/gobackend-sources.jar
 
+# Windows
+windows/flutter/
+windows/libs/
+windows/**/*.dll
+windows/**/*.exp
+windows/**/*.lib
+windows/**/*.h
+windows/**/*.obj
+windows/**/*.pdb
+!windows/CMakeLists.txt
+!windows/runner/
+
 # Extension folder
 extension/
 

@@ -25,6 +25,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
       await _runMigrations(prefs);
       
       _applySpotifyCredentials();
+      _applyProxySettings();
       
       LogBuffer.loggingEnabled = state.enableLogging;
     }
@@ -236,6 +237,76 @@ class SettingsNotifier extends Notifier<AppSettings> {
       state = state.copyWith(audioQuality: 'LOSSLESS');
     }
     _saveSettings();
+  }
+
+  void setUseProxy(bool enabled) {
+    state = state.copyWith(useProxy: enabled);
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  void setProxyType(String type) {
+    state = state.copyWith(proxyType: type);
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  void setProxyHost(String host) {
+    state = state.copyWith(proxyHost: host);
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  void setProxyPort(int port) {
+    state = state.copyWith(proxyPort: port);
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  void setProxyUsername(String username) {
+    state = state.copyWith(proxyUsername: username);
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  void setProxyPassword(String password) {
+    state = state.copyWith(proxyPassword: password);
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  void setProxySettings({
+    required bool useProxy,
+    required String proxyType,
+    required String proxyHost,
+    required int proxyPort,
+    String? proxyUsername,
+    String? proxyPassword,
+  }) {
+    state = state.copyWith(
+      useProxy: useProxy,
+      proxyType: proxyType,
+      proxyHost: proxyHost,
+      proxyPort: proxyPort,
+      proxyUsername: proxyUsername ?? '',
+      proxyPassword: proxyPassword ?? '',
+    );
+    _saveSettings();
+    _applyProxySettings();
+  }
+
+  Future<void> _applyProxySettings() async {
+    if (state.useProxy && state.proxyHost.isNotEmpty) {
+      await PlatformBridge.setProxyConfig(
+        state.proxyType,
+        state.proxyHost,
+        state.proxyPort,
+        state.proxyUsername,
+        state.proxyPassword,
+      );
+    } else {
+      await PlatformBridge.clearProxyConfig();
+    }
   }
 }
 

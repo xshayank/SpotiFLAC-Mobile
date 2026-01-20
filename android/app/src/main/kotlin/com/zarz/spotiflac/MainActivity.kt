@@ -678,6 +678,38 @@ class MainActivity: FlutterActivity() {
                             }
                             result.success(null)
                         }
+                        "setProxyConfig" -> {
+                            val proxyType = call.argument<String>("proxy_type") ?: ""
+                            val host = call.argument<String>("host") ?: ""
+                            val port = call.argument<Int>("port") ?: 0
+                            val username = call.argument<String>("username") ?: ""
+                            val password = call.argument<String>("password") ?: ""
+                            
+                            // Validate inputs
+                            if (host.isEmpty()) {
+                                result.error("INVALID_ARGUMENT", "Proxy host cannot be empty", null)
+                                return@launch
+                            }
+                            if (port <= 0 || port > 65535) {
+                                result.error("INVALID_ARGUMENT", "Invalid proxy port: $port", null)
+                                return@launch
+                            }
+                            if (proxyType.isEmpty() || !listOf("http", "https", "socks5").contains(proxyType.lowercase())) {
+                                result.error("INVALID_ARGUMENT", "Invalid proxy type: $proxyType", null)
+                                return@launch
+                            }
+                            
+                            withContext(Dispatchers.IO) {
+                                Gobackend.setProxyConfigJSON(proxyType, host, port.toLong(), username, password)
+                            }
+                            result.success(null)
+                        }
+                        "clearProxyConfig" -> {
+                            withContext(Dispatchers.IO) {
+                                Gobackend.clearProxyConfigJSON()
+                            }
+                            result.success(null)
+                        }
                         else -> result.notImplemented()
                     }
                 } catch (e: Exception) {

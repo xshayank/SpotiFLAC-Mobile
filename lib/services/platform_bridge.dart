@@ -856,4 +856,26 @@ class PlatformBridge {
     _log.d('clearStoreCache');
     await _channel.invokeMethod('clearStoreCache');
   }
+
+  static Future<void> setProxyConfig(
+    String proxyType,
+    String host,
+    int port,
+    String username,
+    String password,
+  ) async {
+    _log.i('setProxyConfig: $proxyType://$host:$port');
+    await _channel.invokeMethod('setProxyConfig', {
+      'proxy_type': proxyType,
+      'host': host,
+      'port': port,
+      'username': username,
+      'password': password,
+    });
+  }
+
+  static Future<void> clearProxyConfig() async {
+    _log.d('clearProxyConfig');
+    await _channel.invokeMethod('clearProxyConfig');
+  }
 }
