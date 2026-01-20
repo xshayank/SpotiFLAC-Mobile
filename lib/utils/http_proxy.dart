@@ -37,9 +37,14 @@ HttpClient configureHttpClientProxy(HttpClient client, AppSettings settings) {
       // For Dart's findProxy, format is 'PROXY host:port' without scheme
       client.findProxy = (uri) {
         if (proxyAuth != null) {
-          // Note: Dart's HttpClient doesn't support auth in findProxy
-          // Authentication needs to be handled at the proxy level
-          _log.w('Proxy authentication may not work with HttpClient. Use authenticated proxy or Go backend for full auth support.');
+          // Note: Dart's HttpClient doesn't support proxy authentication via findProxy
+          // Workarounds:
+          // 1. Use a local proxy that handles authentication (e.g., Privoxy, mitmproxy)
+          // 2. Main API calls use Go backend which supports full authentication
+          // 3. For critical downloads, configure proxy at system level
+          _log.w('Proxy authentication not supported by Dart HttpClient. '
+                 'Use authenticated local proxy or rely on Go backend (API calls) for auth support. '
+                 'Cover downloads may fail if proxy requires authentication.');
         }
         return 'PROXY $proxyAddress';
       };
