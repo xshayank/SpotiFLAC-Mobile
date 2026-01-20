@@ -1,6 +1,7 @@
 package gobackend
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -146,8 +147,22 @@ func initializeTransport() {
 		}
 	}
 
+	// Create DialContext function from the dialer
+	// Try ContextDialer first (for SOCKS5 proxies), fall back to net.Dialer
+	var dialContext func(ctx context.Context, network, addr string) (net.Conn, error)
+	if cd, ok := dialer.(proxy.ContextDialer); ok {
+		dialContext = cd.DialContext
+	} else if nd, ok := dialer.(*net.Dialer); ok {
+		dialContext = nd.DialContext
+	} else {
+		// Fallback: wrap the basic Dial method
+		dialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialer.Dial(network, addr)
+		}
+	}
+
 	sharedTransport = &http.Transport{
-		DialContext: dialer.DialContext,
+		DialContext: dialContext,
 		Proxy:       createProxyFunc(),
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   10,
