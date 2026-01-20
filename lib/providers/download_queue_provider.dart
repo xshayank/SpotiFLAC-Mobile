@@ -1108,7 +1108,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
         coverPath = '${tempDir.path}/cover_$uniqueId.jpg';
 
         final httpClient = HttpClient();
-        final settings = ref.read(settingsProvider);
         configureHttpClientProxy(httpClient, settings);
         final request = await httpClient.getUrl(Uri.parse(coverUrl));
         final response = await request.close();
@@ -1249,7 +1248,6 @@ class DownloadQueueNotifier extends Notifier<DownloadQueueState> {
         coverPath = '${tempDir.path}/cover_mp3_$uniqueId.jpg';
 
         final httpClient = HttpClient();
-        final settings = ref.read(settingsProvider);
         configureHttpClientProxy(httpClient, settings);
         final request = await httpClient.getUrl(Uri.parse(coverUrl));
         final response = await request.close();
