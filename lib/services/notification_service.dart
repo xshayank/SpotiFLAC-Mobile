@@ -57,6 +57,9 @@ class NotificationService {
     required int progress,
     required int total,
   }) async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     final percentage = total > 0 ? (progress * 100 ~/ total) : 0;
@@ -101,6 +104,9 @@ class NotificationService {
     required String trackName,
     required String artistName,
   }) async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     final androidDetails = AndroidNotificationDetails(
@@ -146,6 +152,9 @@ class NotificationService {
     int? completedCount,
     int? totalCount,
   }) async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     final title = completedCount != null && totalCount != null
@@ -186,6 +195,9 @@ class NotificationService {
     required int completedCount,
     required int failedCount,
   }) async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     final title = failedCount > 0
@@ -223,6 +235,9 @@ class NotificationService {
   }
 
   Future<void> cancelDownloadNotification() async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     await _notifications.cancel(downloadProgressId);
   }
 
@@ -231,6 +246,9 @@ class NotificationService {
     required int received,
     required int total,
   }) async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     final percentage = total > 0 ? (received * 100 ~/ total) : 0;
@@ -274,6 +292,9 @@ class NotificationService {
   }
 
   Future<void> showUpdateDownloadComplete({required String version}) async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     const androidDetails = AndroidNotificationDetails(
@@ -307,6 +328,9 @@ class NotificationService {
   }
 
   Future<void> showUpdateDownloadFailed() async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     if (!_isInitialized) await initialize();
 
     const androidDetails = AndroidNotificationDetails(
@@ -339,6 +363,9 @@ class NotificationService {
   }
 
   Future<void> cancelUpdateNotification() async {
+    // Notifications are only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     await _notifications.cancel(updateDownloadId);
   }
 }

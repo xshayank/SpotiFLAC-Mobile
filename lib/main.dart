@@ -15,10 +15,13 @@ void main() async {
   await CoverCacheManager.initialize();
   debugPrint('CoverCacheManager initialized: ${CoverCacheManager.isInitialized}');
   
-  await Future.wait([
-    NotificationService().initialize(),
-    ShareIntentService().initialize(),
-  ]);
+  // Initialize mobile-specific services only on Android and iOS
+  if (Platform.isAndroid || Platform.isIOS) {
+    await Future.wait([
+      NotificationService().initialize(),
+      ShareIntentService().initialize(),
+    ]);
+  }
   
   runApp(
     ProviderScope(
