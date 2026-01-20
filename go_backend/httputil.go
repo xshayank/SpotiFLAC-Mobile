@@ -134,6 +134,9 @@ func createProxyFunc() func(*http.Request) (*url.URL, error) {
 
 // initializeTransport initializes the shared transport with proxy settings
 func initializeTransport() {
+	transportInitMux.Lock()
+	defer transportInitMux.Unlock()
+	
 	dialer, err := createProxyDialer()
 	if err != nil {
 		GoLog("[Proxy] Error creating proxy dialer: %v\n", err)
@@ -196,32 +199,16 @@ const (
 )
 
 // Shared transport with connection pooling to prevent TCP exhaustion
-var sharedTransport = &http.Transport{
-	DialContext: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).DialContext,
-	MaxIdleConns:          100,
-	MaxIdleConnsPerHost:   10,
-	MaxConnsPerHost:       20,
-	IdleConnTimeout:       90 * time.Second,
-	TLSHandshakeTimeout:   10 * time.Second,
-	ExpectContinueTimeout: 1 * time.Second,
-	DisableKeepAlives:     false,
-	ForceAttemptHTTP2:     true,
-	WriteBufferSize:       64 * 1024,
-	ReadBufferSize:        64 * 1024,
-	DisableCompression:    true,
-}
+var (
+	sharedTransport  *http.Transport
+	sharedClient     *http.Client
+	downloadClient   *http.Client
+	transportInitMux sync.Mutex
+)
 
-var sharedClient = &http.Client{
-	Transport: sharedTransport,
-	Timeout:   DefaultTimeout,
-}
-
-var downloadClient = &http.Client{
-	Transport: sharedTransport,
-	Timeout:   DownloadTimeout,
+// init initializes the HTTP clients with default (no proxy) configuration
+func init() {
+	initializeTransport()
 }
 
 func NewHTTPClientWithTimeout(timeout time.Duration) *http.Client {
