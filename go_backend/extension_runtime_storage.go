@@ -1,5 +1,5 @@
 // Package gobackend provides Storage and Credentials API for extension runtime
-package gobackend
+package main
 
 import (
 	"crypto/aes"

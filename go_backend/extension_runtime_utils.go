@@ -1,5 +1,5 @@
 // Package gobackend provides Utility functions for extension runtime
-package gobackend
+package main
 
 import (
 	"crypto/hmac"

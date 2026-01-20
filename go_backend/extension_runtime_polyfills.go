@@ -1,5 +1,5 @@
 // Package gobackend provides Browser-like Polyfills for extension runtime
-package gobackend
+package main
 
 import (
 	"encoding/base64"

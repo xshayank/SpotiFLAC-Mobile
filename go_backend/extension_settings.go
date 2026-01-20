@@ -1,5 +1,5 @@
 // Package gobackend provides extension settings storage
-package gobackend
+package main
 
 import (
 	"encoding/json"

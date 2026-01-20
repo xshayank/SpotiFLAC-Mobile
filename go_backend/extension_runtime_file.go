@@ -1,5 +1,5 @@
 // Package gobackend provides File API for extension runtime
-package gobackend
+package main
 
 import (
 	"fmt"

@@ -1,5 +1,5 @@
 // Package gobackend provides HTTP API for extension runtime
-package gobackend
+package main
 
 import (
 	"encoding/json"

@@ -1,5 +1,5 @@
 // Package gobackend provides Auth API and PKCE support for extension runtime
-package gobackend
+package main
 
 import (
 	"crypto/rand"

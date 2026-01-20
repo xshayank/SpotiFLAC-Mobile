@@ -1,5 +1,5 @@
 // Package gobackend provides Track Matching API for extension runtime
-package gobackend
+package main
 
 import (
 	"strings"

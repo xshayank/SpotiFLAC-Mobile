@@ -1,6 +1,6 @@
 // Package gobackend provides exported functions for gomobile binding
 // These functions are the bridge between Flutter and Go backend
-package gobackend
+package main
 
 import (
 	"context"

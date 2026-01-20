@@ -1,5 +1,5 @@
 // Package gobackend provides extension manifest parsing and validation
-package gobackend
+package main
 
 import (
 	"encoding/json"

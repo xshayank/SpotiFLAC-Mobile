@@ -1,5 +1,5 @@
 // Package gobackend provides FFmpeg API for extension runtime
-package gobackend
+package main
 
 import (
 	"fmt"

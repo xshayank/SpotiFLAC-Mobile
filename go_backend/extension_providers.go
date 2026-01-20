@@ -1,5 +1,5 @@
 // Package gobackend provides extension provider interfaces
-package gobackend
+package main
 
 import (
 	"context"
