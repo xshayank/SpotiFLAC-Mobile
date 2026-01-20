@@ -35,7 +35,7 @@ jobs:
       - name: Verify DLL created
         run: |
           if (Test-Path windows\libs\gobackend.dll) {
-            Write-Host "✓ gobackend.dll created successfully"
+            Write-Host "gobackend.dll created successfully"
             Get-Item windows\libs\gobackend.dll
           } else {
             Write-Error "ERROR: gobackend.dll not found!"
