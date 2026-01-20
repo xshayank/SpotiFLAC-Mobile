@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +44,9 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   void _setupShareListener() {
+    // Share intent is only available on mobile platforms
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    
     final pendingUrl = ShareIntentService().consumePendingUrl();
     if (pendingUrl != null) {
       _log.d('Processing pending shared URL: $pendingUrl');
