@@ -28,17 +28,29 @@ jobs:
       - name: Build Go backend for Windows
         working-directory: go_backend
         run: |
+          Write-Host "Listing go_backend directory contents..."
+          dir
+          Write-Host "Creating windows\libs directory..."
           New-Item -ItemType Directory -Force -Path ..\windows\libs
-          go build -buildmode=c-shared -o ..\windows\libs\gobackend.dll .
+          Write-Host "Building Go backend DLL..."
+          go build -v -buildmode=c-shared -o ..\windows\libs\gobackend.dll .
+          Write-Host "Build complete"
         shell: powershell
 
       - name: Verify DLL created
         run: |
+          Write-Host "Verifying DLL creation at windows\libs\gobackend.dll..."
           if (Test-Path windows\libs\gobackend.dll) {
-            Write-Host "gobackend.dll created successfully"
+            Write-Host "SUCCESS: gobackend.dll created successfully"
             Get-Item windows\libs\gobackend.dll
           } else {
             Write-Error "ERROR: gobackend.dll not found!"
+            Write-Host "Listing windows\libs directory:"
+            if (Test-Path windows\libs) {
+              dir windows\libs
+            } else {
+              Write-Host "windows\libs directory does not exist"
+            }
             exit 1
           }
         shell: powershell
@@ -70,8 +82,19 @@ jobs:
 
       - name: Copy Go backend DLL to output
         run: |
+          Write-Host "Verifying source DLL exists..."
+          if (!(Test-Path windows\libs\gobackend.dll)) {
+            Write-Error "ERROR: Source DLL not found at windows\libs\gobackend.dll"
+            exit 1
+          }
+          Write-Host "Verifying destination directory exists..."
+          if (!(Test-Path build\windows\x64\runner\Release)) {
+            Write-Error "ERROR: Destination directory not found at build\windows\x64\runner\Release"
+            exit 1
+          }
+          Write-Host "Copying gobackend.dll to Release folder..."
           Copy-Item windows\libs\gobackend.dll build\windows\x64\runner\Release\
-          Write-Host "✓ Copied gobackend.dll to Release folder"
+          Write-Host "SUCCESS: Copied gobackend.dll to Release folder"
         shell: powershell
 
       - name: Get version
@@ -92,10 +115,20 @@ jobs:
           $OUTPUT_DIR = "build\windows\x64\runner\Release"
           $ARCHIVE_NAME = "SpotiFLAC-$VERSION-windows-x64.zip"
           
+          Write-Host "Creating distribution archive for version: $VERSION"
+          Write-Host "Output directory: $OUTPUT_DIR"
+          Write-Host "Archive name: $ARCHIVE_NAME"
+          
+          # Verify the output directory exists
+          if (!(Test-Path $OUTPUT_DIR)) {
+            Write-Error "ERROR: Output directory not found at $OUTPUT_DIR"
+            exit 1
+          }
+          
           # Compress the Release folder
           Compress-Archive -Path "$OUTPUT_DIR\*" -DestinationPath $ARCHIVE_NAME
           
-          Write-Host "✓ Created distribution archive: $ARCHIVE_NAME"
+          Write-Host "SUCCESS: Created distribution archive: $ARCHIVE_NAME"
           Get-Item $ARCHIVE_NAME
         shell: powershell
 
